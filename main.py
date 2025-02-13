@@ -22,11 +22,6 @@ def select_purchase_date():
 
     return selected  # Return selected date
 
-def select_purchase_date():
-    """Shows an interactive date picker using npyscreen."""
-    app = DatePickerApp()
-    app.run()
-    return app.selected_date
 
 def main():
     initialize_db()
