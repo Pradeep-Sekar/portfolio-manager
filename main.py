@@ -121,6 +121,10 @@ def main():
                     else:
                         live_price = get_mutual_fund_nav(symbol)
 
+                    if purchase_price is None:
+                        console.print(f"[bold red]⚠️ Purchase price for {symbol} is not available.[/]")
+                        continue
+
                     total_cost = purchase_price * units
                     current_value = (live_price * units) if live_price else 0
                     profit_loss = (current_value - total_cost) if live_price else 0
