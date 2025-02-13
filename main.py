@@ -167,8 +167,6 @@ def main():
                     console.print(f"💰 [bold cyan]Difference in Stocks (INR): {difference_stock_str}[/]\n")
 
                 # Print Mutual Fund Table
-                    console.print(stock_table)
-
                 if len(fund_table.rows) > 0:
                     console.print(fund_table)
                     difference_fund = total_fund_value - total_invested_fund
@@ -185,7 +183,6 @@ def main():
                 console.print(f"💰 [bold cyan]Total Portfolio Invested Amount (INR): {total_portfolio_invested:.2f}[/]")
                 console.print(f"💰 [bold cyan]Total Portfolio Value (INR): {total_portfolio_value:.2f}[/]")
                 console.print(f"💰 [bold cyan]Total Portfolio Difference (INR): {total_portfolio_difference_str}[/]")
-                    console.print(fund_table)
 
         elif choice == "3":
             try:
