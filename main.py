@@ -7,8 +7,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 import npyscreen
-from pick import pick
-from datetime import datetime, timedelta
+
 
 
 
