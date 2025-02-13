@@ -13,8 +13,8 @@ def main():
 
         choice = input("Enter your choice (1-4): ").strip()
 
-        if choice not in ["1", "2", "3", "4"]:
-            print("❌ Invalid choice! Please enter a number between 1 and 4.")
+        if choice not in ["1", "2", "3", "4", "5"]:
+            print("❌ Invalid choice! Please enter a number between 1 and 5.")
             continue
 
         if choice == "1":
