@@ -44,7 +44,7 @@ def main():
             if records:
                 table_data = []
                 for record in records:
-                    stock_id, stock_symbol, purchase_date, purchase_price, units = record
+                    stock_id, stock_symbol, purchase_date, purchase_price, units, *rest = record
                     currency = "INR" if stock_symbol.endswith(".NS") else "USD"
                     live_price = get_live_price(stock_symbol, currency)
                     total_cost = purchase_price * units
