@@ -1,17 +1,22 @@
 from database import initialize_db, add_stock, view_portfolio, delete_stock, get_live_price, get_usd_to_inr, get_historical_price
 from tabulate import tabulate
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
+
+console = Console() 
 
 def main():
     initialize_db()
     while True:
-        print("\n📊 Stock Portfolio Manager")
+        console.print("\n[bold cyan]📊 Stock Portfolio Manager[/]", style="bold underline")
         print("1. Add Stock")
         print("2. View Portfolio (with Profit/Loss)")
         print("3. Delete Stock")
         print("4. Exit")
         print("5. View Historical Stock Performance")
 
-        choice = input("Enter your choice (1-4): ").strip()
+        choice = input("Enter your choice (1-5): ").strip()
 
         if choice not in ["1", "2", "3", "4", "5"]:
             print("❌ Invalid choice! Please enter a number between 1 and 5.")
@@ -40,39 +45,54 @@ def main():
                 # If stock is valid, add it to the database
                 add_stock(stock, purchase_date, purchase_price, units, currency)
                 break  # Exit loop
-        elif choice == "2":  # View portfolio with profit/loss
+        elif choice == "2":  # View portfolio with total value calculation
             records = view_portfolio()
             if records:
-                table_data = []
-                total_value_inr = 0
+                table = Table(title="📈 Your Stock Portfolio", title_style="bold cyan")
+
+                # Define column headers
+                table.add_column("ID", justify="center", style="bold yellow")
+                table.add_column("Stock", style="bold white")
+                table.add_column("Purchase Date", justify="center", style="bold white")
+                table.add_column("Buy Price", justify="right", style="green")
+                table.add_column("Units", justify="center", style="cyan")
+                table.add_column("Currency", justify="center", style="magenta")
+                table.add_column("Current Price", justify="right", style="bold green")
+                table.add_column("Profit/Loss", justify="right", style="bold red")
+
+                total_value_inr = 0  # Total portfolio value
+
                 for record in records:
-                    stock_id, stock_symbol, purchase_date, purchase_price, units, *rest = record
-                    currency = "INR" if stock_symbol.endswith(".NS") else "USD"
+                    stock_id, stock_symbol, purchase_date, purchase_price, units, currency = record
                     live_price = get_live_price(stock_symbol, currency)
+
                     total_cost = purchase_price * units
-                    current_value = (live_price * units) if live_price else None
-                    profit_loss = (current_value - total_cost) if live_price else None
-                    
-                    # Convert current value to INR if needed
+                    current_value = (live_price * units) if live_price else 0
+                    profit_loss = (current_value - total_cost) if live_price else 0
+
+                    # Convert USD → INR if needed
                     if currency == "USD":
-                        current_value_inr = current_value * get_usd_to_inr() if current_value else 0
+                        conversion_rate = get_usd_to_inr()
+                        current_value_inr = current_value * conversion_rate if current_value else 0
                     else:
-                        current_value_inr = current_value if current_value else 0
+                        current_value_inr = current_value
 
                     total_value_inr += current_value_inr
 
-                    table_data.append([
-                        stock_id, stock_symbol, purchase_date, purchase_price, units, currency,
-                        live_price if live_price else "N/A",
-                        round(profit_loss, 2) if profit_loss else "N/A"
-                    ])
+                    # Format Profit/Loss colors
+                    profit_loss_str = f"[bold red]{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]{profit_loss:.2f}[/]"
 
-                print(tabulate(table_data, headers=[
-                    "ID", "Stock", "Purchase Date", "Buy Price", "Units", "Currency", "Current Price", "Profit/Loss"
-                ], tablefmt="grid"))
-                print(f"\n💰 Total Portfolio Value (in INR): {round(total_value_inr, 2)}")
+                    table.add_row(
+                        str(stock_id), stock_symbol, purchase_date,
+                        f"{purchase_price:.2f}", str(units), currency,
+                        f"{live_price:.2f}" if live_price else "N/A",
+                        profit_loss_str
+                    )
+
+                console.print(table)
+                console.print(f"💰 [bold cyan]Total Portfolio Value (in INR): {total_value_inr:.2f}[/]")
             else:
-                print("📭 No records found.")
+                console.print("📭 [bold red]No records found.[/]", style="bold red")
 
         elif choice == "3":
             try:
