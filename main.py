@@ -158,10 +158,33 @@ def main():
                             profit_loss_str
                         )
 
+                # Print Stock Table
                 if len(stock_table.rows) > 0:
+                    console.print(stock_table)
+                    difference_stock = total_stock_value - total_invested_stock
+                    difference_stock_str = f"[bold red]{difference_stock:.2f}[/]" if difference_stock < 0 else f"[bold green]{difference_stock:.2f}[/]"
+                    console.print(f"💰 [bold cyan]Total Invested in Stocks (INR): {total_invested_stock:.2f}[/]")
+                    console.print(f"💰 [bold cyan]Difference in Stocks (INR): {difference_stock_str}[/]\n")
+
+                # Print Mutual Fund Table
                     console.print(stock_table)
 
                 if len(fund_table.rows) > 0:
+                    console.print(fund_table)
+                    difference_fund = total_fund_value - total_invested_fund
+                    difference_fund_str = f"[bold red]{difference_fund:.2f}[/]" if difference_fund < 0 else f"[bold green]{difference_fund:.2f}[/]"
+                    console.print(f"💰 [bold magenta]Total Invested in Mutual Funds (INR): {total_invested_fund:.2f}[/]")
+                    console.print(f"💰 [bold magenta]Difference in Mutual Funds (INR): {difference_fund_str}[/]\n")
+
+                # Print Total Portfolio Summary
+                total_portfolio_value = total_stock_value + total_fund_value
+                total_portfolio_invested = total_invested_stock + total_invested_fund
+                total_portfolio_difference = total_portfolio_value - total_portfolio_invested
+                total_portfolio_difference_str = f"[bold red]{total_portfolio_difference:.2f}[/]" if total_portfolio_difference < 0 else f"[bold green]{total_portfolio_difference:.2f}[/]"
+
+                console.print(f"💰 [bold cyan]Total Portfolio Invested Amount (INR): {total_portfolio_invested:.2f}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Value (INR): {total_portfolio_value:.2f}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Difference (INR): {total_portfolio_difference_str}[/]")
                     console.print(fund_table)
 
         elif choice == "3":
