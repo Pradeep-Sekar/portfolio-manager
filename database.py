@@ -4,6 +4,8 @@ from rich.console import Console
 console = Console()
 import yfinance as yf
 from rich.progress import Progress
+from fetch_data import get_stock_name, get_mutual_fund_name  # ✅ Import from new file
+
 
 import sqlite3
 
@@ -12,60 +14,45 @@ def initialize_db():
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
-
-    # Fetch the correct name
-    name = None
-    if investment_type == "Stock":
-        name = get_stock_name(symbol)
-    elif investment_type == "Mutual Fund":
-        name = get_mutual_fund_name(symbol)
-
-    # If name is still None, use 'Unknown'
-    if not name:
-        name = "Unknown"
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS portfolio (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             investment_type TEXT NOT NULL CHECK(investment_type IN ('Stock', 'Mutual Fund')),
             symbol TEXT NOT NULL,
+            name TEXT,
             purchase_date TEXT NOT NULL,
             purchase_price REAL NOT NULL,
             units REAL NOT NULL,
             currency TEXT NOT NULL
-    )
+        )
     """)
-    
+
     conn.commit()
     conn.close()
 
-def get_stock_name(symbol):
-    """Fetch the full company name for a stock symbol from Yahoo Finance."""
-    try:
-        stock = yf.Ticker(symbol)
-        info = stock.info
-        return info.get("longName", None)  # Returns the full stock name if available
-    except Exception as e:
-        print(f"⚠️ Error fetching Stock name for {symbol}: {e}")
-        return None
 
-def get_mutual_fund_name(symbol):
-    """Fetch the full mutual fund name from AMFI API based on scheme code."""
-    try:
-        url = f"https://api.mfapi.in/mf/{symbol}"
-        response = requests.get(url)
-        data = response.json()
-
-        if "meta" in data and "scheme_name" in data["meta"]:
-            return data["meta"]["scheme_name"]  # Returns full mutual fund name
-        else:
-            return None
-    except Exception as e:
-        print(f"⚠️ Error fetching Mutual Fund name for {symbol}: {e}")
-        return None
 
 def add_investment(investment_type, symbol, purchase_date, purchase_price, units, currency):
     """Adds a stock or mutual fund entry into the database with a proper name."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
+
+    # ✅ Ensure `name` is always assigned
+    name = "UNKNOWN"  # Default name if fetching fails
+
+    # ✅ Fetch the correct name
+    if investment_type == "Stock":
+        fetched_name = get_stock_name(symbol)
+        if fetched_name and fetched_name != "UNKNOWN":
+            name = fetched_name  # Assign only if valid
+
+    elif investment_type == "Mutual Fund":
+        fetched_name = get_mutual_fund_name(symbol)
+        if fetched_name and fetched_name != "UNKNOWN":
+            name = fetched_name  # Assign only if valid
+
+    print(f"DEBUG: Storing {symbol} with name {name}")  # Debugging line
+
     cursor.execute("""
         INSERT INTO portfolio (investment_type, symbol, name, purchase_date, purchase_price, units, currency)
         VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -77,16 +64,42 @@ def add_investment(investment_type, symbol, purchase_date, purchase_price, units
 def view_portfolio():
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM portfolio")
+    cursor.execute("SELECT id, investment_type, symbol, name, purchase_date, purchase_price, units, currency FROM portfolio")
     records = cursor.fetchall()
     conn.close()
     return records
 
-def delete_stock(stock_id):
+def delete_investment():
+    """Deletes a stock or mutual fund from the portfolio."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM portfolio WHERE id = ?", (stock_id,))
-    conn.commit()
+
+    # Show all investments before asking for deletion
+    cursor.execute("SELECT id, investment_type, symbol, name FROM portfolio")
+    records = cursor.fetchall()
+
+    if not records:
+        print("📭 No investments found in your portfolio.")
+        conn.close()
+        return
+
+    # Display investments
+    print("\n📌 Your Portfolio:")
+    for stock_id, investment_type, symbol, name in records:
+        print(f"[{stock_id}] {investment_type}: {name} ({symbol})")
+
+    try:
+        delete_id = int(input("\n🗑 Enter the ID of the stock or mutual fund to delete: ").strip())
+        cursor.execute("DELETE FROM portfolio WHERE id = ?", (delete_id,))
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            print(f"✅ Investment ID {delete_id} deleted successfully!")
+        else:
+            print(f"⚠️ Investment ID {delete_id} not found.")
+    except ValueError:
+        print("❌ Invalid input. Please enter a valid numeric ID.")
+
     conn.close()
 
 import yfinance as yf
@@ -107,7 +120,7 @@ def get_live_price(stock_symbol, currency):
             live_price = round(stock_info["Close"].iloc[-1], 2)
             
             # Convert USD → INR if needed
-            if currency == "INR" and not stock_symbol.endswith(".NS"):
+            if currency == "INR" and not (stock_symbol.endswith(".NS") or stock_symbol.endswith(".BO")):
                 conversion_rate = get_usd_to_inr()
                 return round(live_price * conversion_rate, 2)
 

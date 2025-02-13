@@ -1,7 +1,9 @@
 from database import (
-    initialize_db, add_investment, view_portfolio, delete_stock,
-    get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price
+    initialize_db, add_investment, view_portfolio, delete_investment,
+    get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price, 
 )
+from fetch_data import (get_stock_name, get_mutual_fund_name)
+
 from tabulate import tabulate
 from rich.console import Console
 from rich.table import Table
@@ -31,7 +33,7 @@ def main():
         console.print("\n[bold cyan]📊 Stock Portfolio Manager[/]", style="bold underline")
         console.print("1. [bold]Add Stock[/]")
         console.print("2. [bold]View Portfolio (with Profit/Loss)[/]")
-        console.print("3. [bold]Delete Stock[/]")
+        console.print("3. [bold]Delete Investment[/]")
         console.print("4. [bold]Exit[/]")
         console.print("5. [bold]View Historical Stock Performance[/]")
 
@@ -70,7 +72,7 @@ def main():
                     continue
 
                 # Determine currency (Stocks are USD/INR, Mutual Funds are INR)
-                currency = "INR" if investment_type == "Mutual Fund" or symbol.endswith(".NS") else "USD"
+                currency = "INR" if (symbol.endswith(".NS") or symbol.endswith(".BO")) else "USD"
 
                 # Validate Stocks using `get_live_price()`, Mutual Funds using `get_mutual_fund_nav()`
                 if investment_type == "Stock" and get_live_price(symbol, currency) is None:
@@ -187,7 +189,7 @@ def main():
         elif choice == "3":
             try:
                 stock_id = int(input("Enter Stock ID to Delete: ").strip())
-                delete_stock(stock_id)
+                delete_investment()
             except ValueError:
                 console.print("[bold red]❌ Invalid Stock ID! Please enter a number.[/]")
                 continue
