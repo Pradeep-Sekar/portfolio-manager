@@ -1,4 +1,4 @@
-from database import initialize_db, add_stock, view_portfolio, delete_stock, get_live_price, get_usd_to_inr
+from database import initialize_db, add_stock, view_portfolio, delete_stock, get_live_price, get_usd_to_inr, get_historical_price
 from tabulate import tabulate
 
 def main():
