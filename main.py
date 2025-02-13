@@ -85,102 +85,102 @@ def main():
                 break  # Exit loop after successful addition
 
         elif choice == "2":  # View portfolio with separate Stock & Mutual Fund sections
-    records = view_portfolio()
-    if records:
-        # Create separate tables for Stocks & Mutual Funds
-        stock_table = Table(title="📈 Stock Portfolio", title_style="bold cyan")
-        fund_table = Table(title="💰 Mutual Fund Portfolio", title_style="bold magenta")
+            records = view_portfolio()
+            if records:
+                # Create separate tables for Stocks & Mutual Funds
+                stock_table = Table(title="📈 Stock Portfolio", title_style="bold cyan")
+                fund_table = Table(title="💰 Mutual Fund Portfolio", title_style="bold magenta")
 
-        # Define common columns
-        for table in [stock_table, fund_table]:
-            table.add_column("ID", justify="center", style="bold yellow")
-            table.add_column("Symbol", style="bold white")
-            table.add_column("Name", style="bold white")
-            table.add_column("Purchase Date", justify="center", style="bold white")
-            table.add_column("Buy Price", justify="right", style="green")
-            table.add_column("Units", justify="center", style="cyan")
-            table.add_column("Currency", justify="center", style="magenta")
-            table.add_column("Current Price/NAV", justify="right", style="bold green")
-            table.add_column("Profit/Loss", justify="right", style="bold red")
+                # Define common columns
+                for table in [stock_table, fund_table]:
+                    table.add_column("ID", justify="center", style="bold yellow")
+                    table.add_column("Symbol", style="bold white")
+                    table.add_column("Name", style="bold white")
+                    table.add_column("Purchase Date", justify="center", style="bold white")
+                    table.add_column("Buy Price", justify="right", style="green")
+                    table.add_column("Units", justify="center", style="cyan")
+                    table.add_column("Currency", justify="center", style="magenta")
+                    table.add_column("Current Price/NAV", justify="right", style="bold green")
+                    table.add_column("Profit/Loss", justify="right", style="bold red")
 
-        total_stock_value = 0  # Total stock value in INR
-        total_fund_value = 0  # Total mutual fund value in INR
-        total_invested_stock = 0  # Total invested amount in stocks
-        total_invested_fund = 0  # Total invested amount in mutual funds
+                total_stock_value = 0  # Total stock value in INR
+                total_fund_value = 0  # Total mutual fund value in INR
+                total_invested_stock = 0  # Total invested amount in stocks
+                total_invested_fund = 0  # Total invested amount in mutual funds
 
-        for record in records:
-            stock_id, investment_type, symbol, name, purchase_date, purchase_price, units, currency = record
+                for record in records:
+                    stock_id, investment_type, symbol, name, purchase_date, purchase_price, units, currency = record
 
-            display_name = name if name else symbol  # Show name if available
+                    display_name = name if name else symbol  # Show name if available
 
-            # Fetch the latest price
-            if investment_type == "Stock":
-                live_price = get_live_price(symbol, currency)
-            else:  # Mutual Fund
-                live_price = get_mutual_fund_nav(symbol)
+                    # Fetch the latest price
+                    if investment_type == "Stock":
+                        live_price = get_live_price(symbol, currency)
+                    else:  # Mutual Fund
+                        live_price = get_mutual_fund_nav(symbol)
 
-            total_cost = purchase_price * units  # Total amount invested in this asset
-            current_value = (live_price * units) if live_price else 0
-            profit_loss = (current_value - total_cost) if live_price else 0
+                    total_cost = purchase_price * units  # Total amount invested in this asset
+                    current_value = (live_price * units) if live_price else 0
+                    profit_loss = (current_value - total_cost) if live_price else 0
 
-            # Convert USD → INR if needed
-            if currency == "USD":
-                conversion_rate = get_usd_to_inr()
-                current_value_inr = current_value * conversion_rate if current_value else 0
-                total_cost_inr = total_cost * conversion_rate  # Convert invested amount to INR
+                    # Convert USD → INR if needed
+                    if currency == "USD":
+                        conversion_rate = get_usd_to_inr()
+                        current_value_inr = current_value * conversion_rate if current_value else 0
+                        total_cost_inr = total_cost * conversion_rate  # Convert invested amount to INR
+                    else:
+                        current_value_inr = current_value
+                        total_cost_inr = total_cost  # Already in INR
+
+                    # Format Profit/Loss colors
+                    profit_loss_str = f"[bold red]{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]{profit_loss:.2f}[/]"
+
+                    if investment_type == "Stock":
+                        total_stock_value += current_value_inr
+                        total_invested_stock += total_cost_inr
+                        stock_table.add_row(
+                            str(stock_id), symbol, display_name, purchase_date,
+                            f"{purchase_price:.2f}", str(units), currency,
+                            f"{live_price:.2f}" if live_price else "N/A",
+                            profit_loss_str
+                        )
+                    else:  # Mutual Fund
+                        total_fund_value += current_value_inr
+                        total_invested_fund += total_cost_inr
+                        fund_table.add_row(
+                            str(stock_id), symbol, display_name, purchase_date,
+                            f"{purchase_price:.2f}", str(units), currency,
+                            f"{live_price:.2f}" if live_price else "N/A",
+                            profit_loss_str
+                        )
+
+                # Print Stock Table
+                if len(stock_table.rows) > 0:
+                    console.print(stock_table)
+                    difference_stock = total_stock_value - total_invested_stock
+                    difference_stock_str = f"[bold red]{difference_stock:.2f}[/]" if difference_stock < 0 else f"[bold green]{difference_stock:.2f}[/]"
+                    console.print(f"💰 [bold cyan]Total Invested in Stocks (INR): {total_invested_stock:.2f}[/]")
+                    console.print(f"💰 [bold cyan]Difference in Stocks (INR): {difference_stock_str}[/]\n")
+
+                # Print Mutual Fund Table
+                if len(fund_table.rows) > 0:
+                    console.print(fund_table)
+                    difference_fund = total_fund_value - total_invested_fund
+                    difference_fund_str = f"[bold red]{difference_fund:.2f}[/]" if difference_fund < 0 else f"[bold green]{difference_fund:.2f}[/]"
+                    console.print(f"💰 [bold magenta]Total Invested in Mutual Funds (INR): {total_invested_fund:.2f}[/]")
+                    console.print(f"💰 [bold magenta]Difference in Mutual Funds (INR): {difference_fund_str}[/]\n")
+
+                # Print Total Portfolio Summary
+                total_portfolio_value = total_stock_value + total_fund_value
+                total_portfolio_invested = total_invested_stock + total_invested_fund
+                total_portfolio_difference = total_portfolio_value - total_portfolio_invested
+                total_portfolio_difference_str = f"[bold red]{total_portfolio_difference:.2f}[/]" if total_portfolio_difference < 0 else f"[bold green]{total_portfolio_difference:.2f}[/]"
+
+                console.print(f"💰 [bold cyan]Total Portfolio Invested Amount (INR): {total_portfolio_invested:.2f}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Value (INR): {total_portfolio_value:.2f}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Difference (INR): {total_portfolio_difference_str}[/]")
             else:
-                current_value_inr = current_value
-                total_cost_inr = total_cost  # Already in INR
-
-            # Format Profit/Loss colors
-            profit_loss_str = f"[bold red]{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]{profit_loss:.2f}[/]"
-
-            if investment_type == "Stock":
-                total_stock_value += current_value_inr
-                total_invested_stock += total_cost_inr
-                stock_table.add_row(
-                    str(stock_id), symbol, display_name, purchase_date,
-                    f"{purchase_price:.2f}", str(units), currency,
-                    f"{live_price:.2f}" if live_price else "N/A",
-                    profit_loss_str
-                )
-            else:  # Mutual Fund
-                total_fund_value += current_value_inr
-                total_invested_fund += total_cost_inr
-                fund_table.add_row(
-                    str(stock_id), symbol, display_name, purchase_date,
-                    f"{purchase_price:.2f}", str(units), currency,
-                    f"{live_price:.2f}" if live_price else "N/A",
-                    profit_loss_str
-                )
-
-        # Print Stock Table
-        if len(stock_table.rows) > 0:
-            console.print(stock_table)
-            difference_stock = total_stock_value - total_invested_stock
-            difference_stock_str = f"[bold red]{difference_stock:.2f}[/]" if difference_stock < 0 else f"[bold green]{difference_stock:.2f}[/]"
-            console.print(f"💰 [bold cyan]Total Invested in Stocks (INR): {total_invested_stock:.2f}[/]")
-            console.print(f"💰 [bold cyan]Difference in Stocks (INR): {difference_stock_str}[/]\n")
-
-        # Print Mutual Fund Table
-        if len(fund_table.rows) > 0:
-            console.print(fund_table)
-            difference_fund = total_fund_value - total_invested_fund
-            difference_fund_str = f"[bold red]{difference_fund:.2f}[/]" if difference_fund < 0 else f"[bold green]{difference_fund:.2f}[/]"
-            console.print(f"💰 [bold magenta]Total Invested in Mutual Funds (INR): {total_invested_fund:.2f}[/]")
-            console.print(f"💰 [bold magenta]Difference in Mutual Funds (INR): {difference_fund_str}[/]\n")
-
-        # Print Total Portfolio Summary
-        total_portfolio_value = total_stock_value + total_fund_value
-        total_portfolio_invested = total_invested_stock + total_invested_fund
-        total_portfolio_difference = total_portfolio_value - total_portfolio_invested
-        total_portfolio_difference_str = f"[bold red]{total_portfolio_difference:.2f}[/]" if total_portfolio_difference < 0 else f"[bold green]{total_portfolio_difference:.2f}[/]"
-
-        console.print(f"💰 [bold cyan]Total Portfolio Invested Amount (INR): {total_portfolio_invested:.2f}[/]")
-        console.print(f"💰 [bold cyan]Total Portfolio Value (INR): {total_portfolio_value:.2f}[/]")
-        console.print(f"💰 [bold cyan]Total Portfolio Difference (INR): {total_portfolio_difference_str}[/]")
-    else:
-        console.print("📭 [bold red]No records found.[/]", style="bold red")
+                console.print("📭 [bold red]No records found.[/]", style="bold red")
 
         elif choice == "3":
             try:
