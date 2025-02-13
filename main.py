@@ -52,13 +52,13 @@ def main():
                     profit_loss = (current_value - total_cost) if live_price else None
                     
                     table_data.append([
-                        stock_id, stock_symbol, purchase_date, purchase_price, units,
+                        stock_id, stock_symbol, purchase_date, purchase_price, units, currency,
                         live_price if live_price else "N/A",
                         round(profit_loss, 2) if profit_loss else "N/A"
                     ])
 
                 print(tabulate(table_data, headers=[
-                    "ID", "Stock", "Purchase Date", "Buy Price", "Units", "Current Price", "Profit/Loss"
+                    "ID", "Stock", "Purchase Date", "Buy Price", "Units", "Currency", "Current Price", "Profit/Loss"
                 ], tablefmt="grid"))
             else:
                 print("📭 No records found.")
