@@ -109,9 +109,9 @@ def main():
                 total_invested_fund = 0  # Total invested amount in mutual funds
 
                 for record in records:
-                    stock_id, investment_type, symbol, name, purchase_date, purchase_price, units, currency = record
+                    stock_id, investment_type, symbol, purchase_date, purchase_price, units, currency = record
 
-                    display_name = name if name else symbol  # Show name if available
+                    display_name = symbol  # Use symbol as display name
 
                     # Fetch the latest price
                     if investment_type == "Stock":
