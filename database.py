@@ -54,7 +54,7 @@ def get_live_price(stock_symbol, currency):
     """Fetches the latest stock price with a loading indicator."""
     try:
         with Progress() as progress:
-            task = progress.add_task(f"[cyan]Fetching price for {stock_symbol}...", total=100)
+            task = progress.add_task("[cyan]Fetching price...", total=100)
             stock = yf.Ticker(stock_symbol)
             stock_info = stock.history(period="1d")
 
