@@ -1,4 +1,7 @@
 import sqlite3
+from rich.console import Console
+
+console = Console()
 import yfinance as yf
 from rich.progress import Progress
 
