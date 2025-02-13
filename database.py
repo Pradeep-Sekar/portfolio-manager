@@ -13,17 +13,6 @@ def initialize_db():
     cursor = conn.cursor()
 
 
-    # Fetch the correct name
-    name = None
-    if investment_type == "Stock":
-        name = get_stock_name(symbol)
-    elif investment_type == "Mutual Fund":
-        name = get_mutual_fund_name(symbol)
-
-    # If name is still None, use 'Unknown'
-    if not name:
-        name = "Unknown"
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS portfolio (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
