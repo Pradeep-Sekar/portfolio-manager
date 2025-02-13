@@ -9,6 +9,7 @@ def main():
         print("2. View Portfolio (with Profit/Loss)")
         print("3. Delete Stock")
         print("4. Exit")
+        print("5. View Historical Stock Performance")
 
         choice = input("Enter your choice (1-4): ").strip()
 
@@ -84,6 +85,29 @@ def main():
         elif choice == "4":
             print("👋 Exiting... Have a great day!")
             break
+
+        elif choice == "5":
+            stock = input("Enter Stock Symbol (e.g., AAPL, RELIANCE.NS): ").strip().upper()
+            
+            # Let the user choose a time period
+            print("\nSelect Time Period:")
+            print("1. 1 Month")
+            print("2. 6 Months")
+            print("3. 1 Year")
+            period_choice = input("Enter your choice (1-3): ").strip()
+
+            # Map selection to period strings
+            period_mapping = {"1": "1mo", "2": "6mo", "3": "1y"}
+            period = period_mapping.get(period_choice, "1mo")  # Default to 1 month
+
+            # Fetch historical data
+            history = get_historical_price(stock, period)
+
+            if history is not None:
+                print(f"\n📊 Historical Closing Prices for {stock} ({period}):")
+                print(history.to_string())  # Display full series
+            else:
+                print("⚠️ No historical data found.")
 
 if __name__ == "__main__":
     main()
