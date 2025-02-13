@@ -1,4 +1,4 @@
-from database import initialize_db, add_investment, view_portfolio, delete_stock, get_live_price, get_mutual_fund_nav
+from database import initialize_db, add_investment, view_portfolio, delete_stock, get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price
 from tabulate import tabulate
 from rich.console import Console
 from rich.table import Table
