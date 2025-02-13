@@ -58,13 +58,13 @@ def main():
                     investment_type = "Mutual Fund"
                 else:
                     console.print("❌ [bold red]Invalid choice! Please enter 1 or 2.[/]")
-                        continue  # Re-ask the user
+                    continue  # Re-ask the user
 
                 symbol = input("Enter Symbol (e.g., AAPL for stocks, SBI-MF for Mutual Funds): ").strip().upper()
                 purchase_date = select_purchase_date()
                 if not purchase_date:
                     console.print("❌ [bold red]No date selected. Please select a valid date.[/]")
-                        continue
+                    continue
 
                 try:
                     purchase_price = float(input("Enter Purchase Price per Unit: ").strip())
