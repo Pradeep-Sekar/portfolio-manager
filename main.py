@@ -18,7 +18,7 @@ class DatePickerApp(npyscreen.NPSApp):
         self.selected_date = None
 
     def main(self):
-        form = npyscreen.Form(name="📅 Select Purchase Date")
+        form = npyscreen.ActionForm(name="📅 Select Purchase Date")
         date_widget = form.add(npyscreen.DateCombo, name="Select Date:")
         form.edit()
         self.selected_date = date_widget.value.strftime("%Y-%m-%d")
