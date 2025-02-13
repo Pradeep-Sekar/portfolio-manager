@@ -12,6 +12,7 @@ def initialize_db():
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
+
     # Fetch the correct name
     name = None
     if investment_type == "Stock":
