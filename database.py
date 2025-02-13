@@ -11,7 +11,7 @@ def initialize_db():
     """Creates the database and portfolio table with correct schema."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
-    
+
     # Fetch the correct name
     name = None
     if investment_type == "Stock":
