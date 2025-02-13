@@ -5,33 +5,39 @@ console = Console()
 import yfinance as yf
 from rich.progress import Progress
 
+import sqlite3
+
 def initialize_db():
+    """Creates the database and portfolio table with correct schema."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
+    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS portfolio (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            stock TEXT NOT NULL,
+            investment_type TEXT NOT NULL CHECK(investment_type IN ('Stock', 'Mutual Fund')),
+            symbol TEXT NOT NULL,
             purchase_date TEXT NOT NULL,
             purchase_price REAL NOT NULL,
-            units INTEGER NOT NULL,
+            units REAL NOT NULL,
             currency TEXT NOT NULL
         )
     """)
+    
     conn.commit()
     conn.close()
 
-def add_stock(stock, purchase_date, purchase_price, units, currency):
-    """Adds a stock entry into the database with currency."""
+def add_investment(investment_type, symbol, purchase_date, purchase_price, units, currency):
+    """Adds a stock or mutual fund entry into the database."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO portfolio (stock, purchase_date, purchase_price, units, currency)
-        VALUES (?, ?, ?, ?, ?)""",
-        (stock, purchase_date, purchase_price, units, currency))
+        INSERT INTO portfolio (investment_type, symbol, purchase_date, purchase_price, units, currency)
+        VALUES (?, ?, ?, ?, ?, ?)""",
+        (investment_type, symbol, purchase_date, purchase_price, units, currency))
     conn.commit()
     conn.close()
-    console.print(f"[bold green]✅ Stock {stock} ({currency}) added successfully![/]")
+    print(f"✅ {investment_type} {symbol} ({currency}) added successfully!")
 
 def view_portfolio():
     conn = sqlite3.connect("portfolio.db")
@@ -100,4 +106,20 @@ def get_historical_price(stock_symbol, period="1mo"):
         return history["Close"]  # Returns the closing price series
     except Exception as e:
         console.print(f"[bold red]⚠️ Error fetching historical prices for {stock_symbol}: {e}[/]")
+        return None
+
+def get_mutual_fund_nav(symbol):
+    """Fetches the latest Mutual Fund NAV from AMFI (India Mutual Fund API)."""
+    try:
+        url = "https://api.mfapi.in/mf/" + symbol
+        response = requests.get(url)
+        data = response.json()
+
+        if "data" in data and data["data"]:
+            latest_nav = float(data["data"][0]["nav"])
+            return latest_nav
+        else:
+            return None  # If NAV not found
+    except Exception as e:
+        print(f"⚠️ Error fetching NAV for {symbol}: {e}")
         return None
