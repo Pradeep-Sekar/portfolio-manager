@@ -28,7 +28,7 @@ def add_stock(stock, purchase_date, purchase_price, units, currency):
         (stock, purchase_date, purchase_price, units, currency))
     conn.commit()
     conn.close()
-    print(f"✅ Stock {stock} ({currency}) added successfully!")
+    console.print(f"[bold green]✅ Stock {stock} ({currency}) added successfully![/]")
 
 def view_portfolio():
     conn = sqlite3.connect("portfolio.db")
@@ -56,7 +56,7 @@ def get_live_price(stock_symbol, currency):
             stock_info = stock.history(period="1d")
 
             if stock_info.empty:
-                print(f"⚠️ Stock {stock_symbol} is invalid or delisted.")
+                console.print(f"[bold red]⚠️ Stock {stock_symbol} is invalid or delisted.[/]")
                 return None
 
             progress.update(task, completed=100)
@@ -69,7 +69,7 @@ def get_live_price(stock_symbol, currency):
 
             return live_price
     except Exception as e:
-        print(f"⚠️ Error fetching live price for {stock_symbol}: {e}")
+        console.print(f"[bold red]⚠️ Error fetching live price for {stock_symbol}: {e}[/]")
         return None
 
 import requests
@@ -81,7 +81,7 @@ def get_usd_to_inr():
         data = response.json()
         return round(data["rates"]["INR"], 2)  # Returns exchange rate (e.g., 83.50)
     except Exception as e:
-        print(f"⚠️ Error fetching USD to INR conversion rate: {e}")
+        console.print(f"[bold red]⚠️ Error fetching USD to INR conversion rate: {e}[/]")
         return 83.0  # Default fallback rate
 
 def get_historical_price(stock_symbol, period="1mo"):
@@ -91,10 +91,10 @@ def get_historical_price(stock_symbol, period="1mo"):
         history = stock.history(period=period)
 
         if history.empty:
-            print(f"⚠️ No historical data found for {stock_symbol}.")
+            console.print(f"[bold red]⚠️ No historical data found for {stock_symbol}.[/]")
             return None
 
         return history["Close"]  # Returns the closing price series
     except Exception as e:
-        print(f"⚠️ Error fetching historical prices for {stock_symbol}: {e}")
+        console.print(f"[bold red]⚠️ Error fetching historical prices for {stock_symbol}: {e}[/]")
         return None

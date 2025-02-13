@@ -99,7 +99,7 @@ def main():
                 stock_id = int(input("Enter Stock ID to Delete: ").strip())
                 delete_stock(stock_id)
             except ValueError:
-                print("❌ Invalid Stock ID! Please enter a number.")
+                console.print("[bold red]❌ Invalid Stock ID! Please enter a number.[/]")
                 continue
 
         elif choice == "4":
