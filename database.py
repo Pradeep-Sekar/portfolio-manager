@@ -12,6 +12,17 @@ def initialize_db():
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
     
+    # Fetch the correct name
+    name = None
+    if investment_type == "Stock":
+        name = get_stock_name(symbol)
+    elif investment_type == "Mutual Fund":
+        name = get_mutual_fund_name(symbol)
+
+    # If name is still None, use 'Unknown'
+    if not name:
+        name = "Unknown"
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS portfolio (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,17 +38,43 @@ def initialize_db():
     conn.commit()
     conn.close()
 
+def get_stock_name(symbol):
+    """Fetch the full company name for a stock symbol from Yahoo Finance."""
+    try:
+        stock = yf.Ticker(symbol)
+        info = stock.info
+        return info.get("longName", None)  # Returns the full stock name if available
+    except Exception as e:
+        print(f"⚠️ Error fetching Stock name for {symbol}: {e}")
+        return None
+
+def get_mutual_fund_name(symbol):
+    """Fetch the full mutual fund name from AMFI API based on scheme code."""
+    try:
+        url = f"https://api.mfapi.in/mf/{symbol}"
+        response = requests.get(url)
+        data = response.json()
+
+        if "meta" in data and "scheme_name" in data["meta"]:
+            return data["meta"]["scheme_name"]  # Returns full mutual fund name
+        else:
+            return None
+    except Exception as e:
+        print(f"⚠️ Error fetching Mutual Fund name for {symbol}: {e}")
+        return None
+
 def add_investment(investment_type, symbol, purchase_date, purchase_price, units, currency):
+    """Adds a stock or mutual fund entry into the database with a proper name."""
     """Adds a stock or mutual fund entry into the database."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO portfolio (investment_type, symbol, purchase_date, purchase_price, units, currency)
-        VALUES (?, ?, ?, ?, ?, ?)""",
-        (investment_type, symbol, purchase_date, purchase_price, units, currency))
+        INSERT INTO portfolio (investment_type, symbol, name, purchase_date, purchase_price, units, currency)
+        VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (investment_type, symbol, name, purchase_date, purchase_price, units, currency))
     conn.commit()
     conn.close()
-    print(f"✅ {investment_type} {symbol} ({currency}) added successfully!")
+    print(f"✅ {investment_type} {symbol} ({currency}) added successfully! Name: {name}")
 
 def view_portfolio():
     conn = sqlite3.connect("portfolio.db")
