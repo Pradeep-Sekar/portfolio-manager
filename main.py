@@ -171,10 +171,10 @@ def main():
 
                 if len(fund_table.rows) > 0:
                         console.print(fund_table)
-                    difference_fund = total_fund_value - total_invested_fund
-                    difference_fund_str = f"[bold red]{difference_fund:.2f}[/]" if difference_fund < 0 else f"[bold green]{difference_fund:.2f}[/]"
-                    console.print(f"💰 [bold magenta]Total Invested in Mutual Funds (INR): {total_invested_fund:.2f}[/]")
-                    console.print(f"💰 [bold magenta]Difference in Mutual Funds (INR): {difference_fund_str}[/]\n")
+                        difference_fund = total_fund_value - total_invested_fund
+                        difference_fund_str = f"[bold red]{difference_fund:.2f}[/]" if difference_fund < 0 else f"[bold green]{difference_fund:.2f}[/]"
+                        console.print(f"💰 [bold magenta]Total Invested in Mutual Funds (INR): {total_invested_fund:.2f}[/]")
+                        console.print(f"💰 [bold magenta]Difference in Mutual Funds (INR): {difference_fund_str}[/]\n")
 
                 # Print Total Portfolio Summary
                 total_portfolio_value = total_stock_value + total_fund_value
