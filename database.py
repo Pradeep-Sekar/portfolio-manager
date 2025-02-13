@@ -31,7 +31,7 @@ def initialize_db():
             purchase_price REAL NOT NULL,
             units REAL NOT NULL,
             currency TEXT NOT NULL
-        )
+    )
     """)
     
     conn.commit()
@@ -64,7 +64,6 @@ def get_mutual_fund_name(symbol):
 
 def add_investment(investment_type, symbol, purchase_date, purchase_price, units, currency):
     """Adds a stock or mutual fund entry into the database with a proper name."""
-    """Adds a stock or mutual fund entry into the database."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
     cursor.execute("""
