@@ -61,6 +61,7 @@ def main():
                 table.add_column("Profit/Loss", justify="right", style="bold red")
 
                 total_value_inr = 0  # Total portfolio value
+                total_invested_inr = 0  # Total invested amount
 
                 for record in records:
                     stock_id, stock_symbol, purchase_date, purchase_price, units, currency = record
@@ -70,7 +71,13 @@ def main():
                     current_value = (live_price * units) if live_price else 0
                     profit_loss = (current_value - total_cost) if live_price else 0
 
-                    # Convert USD → INR if needed
+                    # Calculate total invested amount
+                    total_invested = total_cost
+                    if currency == "USD":
+                        total_invested *= get_usd_to_inr()
+                    total_invested_inr += total_invested
+
+                    # Convert USD → INR if needed for current value
                     if currency == "USD":
                         conversion_rate = get_usd_to_inr()
                         current_value_inr = current_value * conversion_rate if current_value else 0
@@ -91,6 +98,12 @@ def main():
 
                 console.print(table)
                 console.print(f"💰 [bold cyan]Total Portfolio Value (in INR): {total_value_inr:.2f}[/]")
+                # Calculate and display the difference
+                difference_inr = total_value_inr - total_invested_inr
+                difference_str = f"[bold red]{difference_inr:.2f}[/]" if difference_inr < 0 else f"[bold green]{difference_inr:.2f}[/]"
+
+                console.print(f"💰 [bold cyan]Total Invested Amount (in INR): {total_invested_inr:.2f}[/]")
+                console.print(f"💰 [bold cyan]Difference (in INR): {difference_str}[/]")
             else:
                 console.print("📭 [bold red]No records found.[/]", style="bold red")
 
