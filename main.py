@@ -100,6 +100,7 @@ def main():
                 table.add_column("Profit/Loss", justify="right", style="bold red")
 
                 total_value_inr = 0
+                total_invested_inr = 0
 
                 for record in records:
                     stock_id, investment_type, symbol, purchase_date, purchase_price, units, currency = record
@@ -121,6 +122,7 @@ def main():
                     else:
                         current_value_inr = current_value
 
+                    total_invested_inr += total_cost if currency == "INR" else total_cost * get_usd_to_inr()
                     total_value_inr += current_value_inr
 
                     # Format Profit/Loss colors
@@ -135,7 +137,10 @@ def main():
 
                 console.print(table)
                 console.print(f"💰 [bold cyan]Total Portfolio Value (in INR): {total_value_inr:.2f}[/]")
-            else:
+                difference = total_value_inr - total_invested_inr
+                difference_str = f"[bold red]{difference:.2f}[/]" if difference < 0 else f"[bold green]{difference:.2f}[/]"
+                console.print(f"💰 [bold cyan]Total Invested Amount (in INR): {total_invested_inr:.2f}[/]")
+                console.print(f"💰 [bold cyan]Difference: {difference_str}[/]")
                 console.print("📭 [bold red]No records found.[/]", style="bold red")
 
         elif choice == "3":
