@@ -1,11 +1,12 @@
 from database import (
     initialize_db, add_investment, view_portfolio, delete_stock,
-    get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price
+    get_live_price, get_mutual_fund_nav, get_usd_to_inr
 )
 from tabulate import tabulate
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
+import npyscreen
 from pick import pick
 from datetime import datetime, timedelta
 
@@ -13,15 +14,22 @@ from datetime import datetime, timedelta
 
 console = Console() 
 
+class DatePickerApp(npyscreen.NPSApp):
+    def __init__(self):
+        super().__init__()
+        self.selected_date = None
+
+    def main(self):
+        form = npyscreen.Form(name="📅 Select Purchase Date")
+        date_widget = form.add(npyscreen.DateCombo, name="Select Date:")
+        form.edit()
+        self.selected_date = date_widget.value.strftime("%Y-%m-%d")
+
 def select_purchase_date():
-    """Displays a simple scrollable date picker (last 30 days)."""
-    today = datetime.today()
-    date_options = [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(30)]  # Last 30 days
-
-    selected, index = pick(date_options, "📅 Select Purchase Date:", indicator="➡️")
-
-    return selected  # Return selected date
-
+    """Shows an interactive date picker using npyscreen."""
+    app = DatePickerApp()
+    app.run()
+    return app.selected_date
 
 def main():
     initialize_db()
