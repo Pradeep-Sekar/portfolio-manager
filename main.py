@@ -43,6 +43,7 @@ def main():
             records = view_portfolio()
             if records:
                 table_data = []
+                total_value_inr = 0
                 for record in records:
                     stock_id, stock_symbol, purchase_date, purchase_price, units, *rest = record
                     currency = "INR" if stock_symbol.endswith(".NS") else "USD"
@@ -51,6 +52,14 @@ def main():
                     current_value = (live_price * units) if live_price else None
                     profit_loss = (current_value - total_cost) if live_price else None
                     
+                    # Convert current value to INR if needed
+                    if currency == "USD":
+                        current_value_inr = current_value * get_usd_to_inr() if current_value else 0
+                    else:
+                        current_value_inr = current_value if current_value else 0
+
+                    total_value_inr += current_value_inr
+
                     table_data.append([
                         stock_id, stock_symbol, purchase_date, purchase_price, units, currency,
                         live_price if live_price else "N/A",
@@ -60,6 +69,7 @@ def main():
                 print(tabulate(table_data, headers=[
                     "ID", "Stock", "Purchase Date", "Buy Price", "Units", "Currency", "Current Price", "Profit/Loss"
                 ], tablefmt="grid"))
+                print(f"\n💰 Total Portfolio Value (in INR): {round(total_value_inr, 2)}")
             else:
                 print("📭 No records found.")
 
