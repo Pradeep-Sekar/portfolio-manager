@@ -10,16 +10,16 @@ def main():
     initialize_db()
     while True:
         console.print("\n[bold cyan]📊 Stock Portfolio Manager[/]", style="bold underline")
-        print("1. Add Stock")
-        print("2. View Portfolio (with Profit/Loss)")
-        print("3. Delete Stock")
-        print("4. Exit")
-        print("5. View Historical Stock Performance")
+        console.print("1. [bold]Add Stock[/]")
+        console.print("2. [bold]View Portfolio (with Profit/Loss)[/]")
+        console.print("3. [bold]Delete Stock[/]")
+        console.print("4. [bold]Exit[/]")
+        console.print("5. [bold]View Historical Stock Performance[/]")
 
         choice = input("Enter your choice (1-5): ").strip()
 
         if choice not in ["1", "2", "3", "4", "5"]:
-            print("❌ Invalid choice! Please enter a number between 1 and 5.")
+            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 5.[/]")
             continue
 
         if choice == "1":
@@ -31,7 +31,7 @@ def main():
                     purchase_price = float(input("Enter Purchase Price: ").strip())
                     units = int(input("Enter Number of Units: ").strip())
                 except ValueError:
-                    print("❌ Invalid input! Price must be a number, and units must be an integer.")
+                    console.print("[bold red]❌ Invalid input! Price must be a number, and units must be an integer.[/]")
                     continue
 
                 # Determine currency
@@ -39,7 +39,7 @@ def main():
 
                 # Validate stock by checking if a price exists
                 if get_live_price(stock, currency) is None:
-                    print(f"❌ {stock} is not a valid stock symbol. Please enter a correct ticker.")
+                    console.print(f"[bold red]❌ {stock} is not a valid stock symbol. Please enter a correct ticker.[/]")
                     continue  # Ask for input again
 
                 # If stock is valid, add it to the database
@@ -103,17 +103,17 @@ def main():
                 continue
 
         elif choice == "4":
-            print("👋 Exiting... Have a great day!")
+            console.print("[bold green]👋 Exiting... Have a great day![/]")
             break
 
         elif choice == "5":
             stock = input("Enter Stock Symbol (e.g., AAPL, RELIANCE.NS): ").strip().upper()
             
             # Let the user choose a time period
-            print("\nSelect Time Period:")
-            print("1. 1 Month")
-            print("2. 6 Months")
-            print("3. 1 Year")
+            console.print("\n[bold]Select Time Period:[/]")
+            console.print("1. [bold]1 Month[/]")
+            console.print("2. [bold]6 Months[/]")
+            console.print("3. [bold]1 Year[/]")
             period_choice = input("Enter your choice (1-3): ").strip()
 
             # Map selection to period strings
@@ -124,10 +124,10 @@ def main():
             history = get_historical_price(stock, period)
 
             if history is not None:
-                print(f"\n📊 Historical Closing Prices for {stock} ({period}):")
-                print(history.to_string())  # Display full series
+                console.print(f"\n[bold cyan]📊 Historical Closing Prices for {stock} ({period}):[/]")
+                console.print(history.to_string())  # Display full series
             else:
-                print("⚠️ No historical data found.")
+                console.print("[bold red]⚠️ No historical data found.[/]")
 
 if __name__ == "__main__":
     main()
