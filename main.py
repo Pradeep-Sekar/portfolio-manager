@@ -107,10 +107,7 @@ def main():
                 total_invested_fund = 0
 
                 for record in records:
-                    stock_id, investment_type, symbol, purchase_date, purchase_price, units, currency = record
-
-                    # Ensure name is correctly displayed
-                    display_name = symbol  # Use symbol as display name
+                    stock_id, investment_type, symbol, name, purchase_date, purchase_price, units, currency = record
 
                     # Ensure name is correctly displayed
                     display_name = name if name and name != symbol else "Unknown"  # Prevents symbol duplication
