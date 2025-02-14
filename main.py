@@ -122,10 +122,27 @@ def main():
                     display_name = name if name and name != symbol else "Unknown"  # Prevents symbol duplication
 
                     # Fetch the latest price
+                    # Get current and previous price
                     if investment_type == "Stock":
                         live_price = get_live_price(symbol, currency)
                     else:
                         live_price = get_mutual_fund_nav(symbol)
+
+                    # Get the previous price from history
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT price FROM price_history 
+                        WHERE symbol = ? 
+                        ORDER BY date DESC LIMIT 2
+                    """, (symbol,))
+                    prices = cursor.fetchall()
+                    
+                    # Determine price change indicator
+                    if len(prices) >= 2:
+                        prev_price = prices[1][0]  # Second most recent price
+                        indicator = "🔼" if live_price > prev_price else "🔽" if live_price < prev_price else "⚫"
+                    else:
+                        indicator = "🆕"
 
                     if purchase_price is None:
                         console.print(f"[bold red]⚠️ Purchase price for {symbol} is not available.[/]")
@@ -151,7 +168,7 @@ def main():
                         stock_table.add_row(
                             str(stock_id), symbol, display_name, purchase_date,
                             f"{purchase_price:.2f}", str(units), currency,
-                            f"{live_price:.2f}" if live_price else "N/A",
+                            f"{live_price:.2f} {indicator}" if live_price else "N/A",
                             profit_loss_str
                         )
                     else:

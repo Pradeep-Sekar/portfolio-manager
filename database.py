@@ -250,11 +250,26 @@ def update_price_history():
                     continue
                 latest_price = hist["Close"].iloc[-1]
 
+            # Get the last recorded price
+            cursor.execute("""
+                SELECT price FROM price_history 
+                WHERE symbol = ? 
+                ORDER BY date DESC LIMIT 1
+            """, (symbol,))
+            last_price = cursor.fetchone()
+
+            # Determine price change indicator
+            if last_price:
+                last_price = last_price[0]
+                indicator = "🔼" if latest_price > last_price else "🔽" if latest_price < last_price else "⚫"
+            else:
+                indicator = "🆕"  # New entry
+
             cursor.execute("""
                 REPLACE INTO price_history (symbol, date, price) VALUES (?, ?, ?)
             """, (symbol, today, latest_price))
 
-            print(f"✅ Recorded {symbol} price: {round(latest_price, 2)} on {today}")
+            print(f"✅ Recorded {symbol} price: {round(latest_price, 2)} {indicator} on {today}")
         except Exception as e:
             print(f"⚠️ Error fetching price for {symbol}: {e}")
 
