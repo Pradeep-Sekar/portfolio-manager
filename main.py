@@ -6,7 +6,7 @@ from database import (
 from fetch_data import (get_stock_name, get_mutual_fund_name)
 from config import OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY
 
-print(f"Using OpenAI API Key: {OPENAI_API_KEY[:5]}...")  # Just for verification
+#print(f"Using OpenAI API Key: {OPENAI_API_KEY[:5]}...")  # Just for verification
 
 from tabulate import tabulate
 from rich.console import Console
