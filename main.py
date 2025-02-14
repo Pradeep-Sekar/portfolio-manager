@@ -3,6 +3,9 @@ from database import (
     get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price, 
 )
 from fetch_data import (get_stock_name, get_mutual_fund_name)
+from config import OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY
+
+print(f"Using OpenAI API Key: {OPENAI_API_KEY[:5]}...")  # Just for verification
 
 from tabulate import tabulate
 from rich.console import Console
@@ -36,10 +39,11 @@ def main():
         console.print("3. [bold]Delete Investment[/]")
         console.print("4. [bold]Exit[/]")
         console.print("5. [bold]View Historical Stock Performance[/]")
+        console.print("6. [bold]Update Prices (Manual Refresh)[/]")
 
-        choice = input("Enter your choice (1-5): ").strip()
+        choice = input("Enter your choice (1-6): ").strip()
 
-        if choice not in ["1", "2", "3", "4", "5"]:
+        if choice not in ["1", "2", "3", "4", "5", "6"]:
             console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 5.[/]")
             continue
 
@@ -220,6 +224,11 @@ def main():
                 console.print(history.to_string())  # Display full series
             else:
                 console.print("[bold red]⚠️ No historical data found.[/]")
+
+        elif choice == "6":
+            from database import update_price_history
+            update_price_history()
+            print("✅ Prices updated successfully!")
 
 if __name__ == "__main__":
     main()
