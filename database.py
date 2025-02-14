@@ -230,12 +230,12 @@ def update_price_history():
             UNIQUE(symbol, date) ON CONFLICT REPLACE
         )
     """)
-    cursor.execute("SELECT symbol FROM portfolio")
-    symbols = [row[0] for row in cursor.fetchall()]
+    cursor.execute("SELECT symbol, investment_type FROM portfolio")
+    records = cursor.fetchall()
 
     today = datetime.datetime.today().strftime("%Y-%m-%d")
 
-    for symbol in symbols:
+    for symbol, investment_type in records:
         try:
             stock = yf.Ticker(symbol)
             hist = stock.history(period="1d")
