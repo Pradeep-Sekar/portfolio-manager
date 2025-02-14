@@ -254,7 +254,7 @@ def update_price_history():
                 REPLACE INTO price_history (symbol, date, price) VALUES (?, ?, ?)
             """, (symbol, today, latest_price))
 
-            print(f"✅ Recorded {symbol} price: {latest_price} on {today}")
+            print(f"✅ Recorded {symbol} price: {round(latest_price, 2)} on {today}")
         except Exception as e:
             print(f"⚠️ Error fetching price for {symbol}: {e}")
 
