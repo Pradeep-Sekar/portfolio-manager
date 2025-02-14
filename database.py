@@ -6,7 +6,6 @@ import yfinance as yf
 from rich.progress import Progress
 from fetch_data import get_stock_name, get_mutual_fund_name  # ✅ Import from new file
 
-
 import sqlite3
 
 def initialize_db():
@@ -30,14 +29,12 @@ def initialize_db():
     conn.commit()
     conn.close()
 
-
-
 def add_investment(investment_type, symbol, purchase_date, purchase_price, units, currency):
     """Adds a stock or mutual fund entry into the database with a proper name."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
-    # ✅ Ensure `name` is always assigned
+    # ✅ Ensure name is always assigned
     name = "UNKNOWN"  # Default name if fetching fails
 
     # ✅ Fetch the correct name
@@ -171,3 +168,82 @@ def get_mutual_fund_nav(symbol):
     except Exception as e:
         print(f"⚠️ Error fetching NAV for {symbol}: {e}")
         return None
+
+def insert_sample_data():
+    """Adds sample stocks & mutual funds for testing."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    sample_data = [
+        ("Stock", "AAPL", "Apple Inc.", "2023-05-10", 150, 10, "USD"),
+        ("Stock", "TSLA", "Tesla Inc.", "2022-11-20", 250, 5, "USD"),
+        ("Stock", "TCS.NS", "Tata Consultancy Services", "2021-07-15", 3200, 15, "INR"),
+        ("Stock", "RELIANCE.NS", "Reliance Industries", "2020-12-05", 2000, 20, "INR"),
+        ("Stock", "HDFCBANK.NS", "HDFC Bank Ltd.", "2019-10-30", 1100, 30, "INR"),
+        ("Stock", "INFY.NS", "Infosys Ltd.", "2022-06-25", 1450, 25, "INR"),
+        ("Stock", "AMZN", "Amazon.com Inc.", "2023-08-12", 3200, 8, "USD"),
+        ("Mutual Fund", "120503", "SBI Bluechip Fund - Direct Plan", "2022-01-15", 125, 100, "INR"),
+        ("Mutual Fund", "118114", "Axis Growth Opportunities Fund", "2023-03-18", 200, 50, "INR"),
+        ("Mutual Fund", "101885", "Nippon India Small Cap Fund", "2021-05-22", 90, 120, "INR"),
+    ]
+
+    cursor.executemany("""
+        INSERT INTO portfolio (investment_type, symbol, name, purchase_date, purchase_price, units, currency)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, sample_data)
+
+    conn.commit()
+    conn.close()
+    print("✅ Sample data inserted successfully!")
+
+def create_price_history_table():
+    """Creates a table to track price changes over time for investments."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS price_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            date TEXT NOT NULL,
+            price REAL NOT NULL
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+    print("✅ Price history table created!")
+
+import yfinance as yf
+import datetime
+
+def update_price_history():
+    """Fetches the latest price for all stocks & mutual funds and updates history."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    # Fetch all investment symbols
+    cursor.execute("SELECT symbol FROM portfolio")
+    symbols = [row[0] for row in cursor.fetchall()]
+
+    today = datetime.datetime.today().strftime("%Y-%m-%d")
+
+    for symbol in symbols:
+        try:
+            stock = yf.Ticker(symbol)
+            hist = stock.history(period="1d")
+            if hist.empty:
+                print(f"⚠️ No price data for {symbol}, skipping...")
+                continue
+
+            latest_price = hist["Close"].iloc[-1]
+            cursor.execute("""
+                INSERT INTO price_history (symbol, date, price) VALUES (?, ?, ?)
+            """, (symbol, today, latest_price))
+
+            print(f"✅ Recorded {symbol} price: {latest_price} on {today}")
+        except Exception as e:
+            print(f"⚠️ Error fetching price for {symbol}: {e}")
+
+    conn.commit()
+    conn.close()
