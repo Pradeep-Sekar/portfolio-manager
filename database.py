@@ -237,15 +237,11 @@ def update_price_history():
 
     for symbol, investment_type in records:
         try:
-            stock = yf.Ticker(symbol)
-            hist = stock.history(period="1d")
-            if hist.empty:
-                print(f"⚠️ No price data for {symbol}, skipping...")
-                continue
-
-            latest_price = hist["Close"].iloc[-1]
             if investment_type == "Mutual Fund" and symbol.isdigit():
                 latest_price = get_mutual_fund_nav(symbol)
+                if latest_price is None:
+                    print(f"⚠️ No NAV data for {symbol}, skipping...")
+                    continue
             else:
                 stock = yf.Ticker(symbol)
                 hist = stock.history(period="1d")
