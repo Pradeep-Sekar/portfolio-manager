@@ -34,21 +34,14 @@ def add_investment(investment_type, symbol, purchase_date, purchase_price, units
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
-    # ✅ Ensure name is always assigned
-    name = "UNKNOWN"  # Default name if fetching fails
-
-    # ✅ Fetch the correct name
+    name = None
     if investment_type == "Stock":
-        fetched_name = get_stock_name(symbol)
-        if fetched_name and fetched_name != "UNKNOWN":
-            name = fetched_name  # Assign only if valid
-
+        name = get_stock_name(symbol)
     elif investment_type == "Mutual Fund":
-        fetched_name = get_mutual_fund_name(symbol)
-        if fetched_name and fetched_name != "UNKNOWN":
-            name = fetched_name  # Assign only if valid
+        name = get_mutual_fund_name(symbol)
 
-    print(f"DEBUG: Storing {symbol} with name {name}")  # Debugging line
+    if not name:
+        name = "Unknown"
 
     cursor.execute("""
         INSERT INTO portfolio (investment_type, symbol, name, purchase_date, purchase_price, units, currency)
@@ -117,7 +110,12 @@ def get_live_price(stock_symbol, currency):
             live_price = round(stock_info["Close"].iloc[-1], 2)
             
             # Convert USD → INR if needed
-            if currency == "INR" and not (stock_symbol.endswith(".NS") or stock_symbol.endswith(".BO")):
+            if stock_symbol.endswith(".NS") or stock_symbol.endswith(".BO"):
+                currency = "INR"
+            else:
+                currency = "USD"
+
+            if currency == "INR":
                 conversion_rate = get_usd_to_inr()
                 return round(live_price * conversion_rate, 2)
 
@@ -223,6 +221,15 @@ def update_price_history():
     cursor = conn.cursor()
 
     # Fetch all investment symbols
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS price_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            date TEXT NOT NULL,
+            price REAL NOT NULL,
+            UNIQUE(symbol, date) ON CONFLICT REPLACE
+        )
+    """)
     cursor.execute("SELECT symbol FROM portfolio")
     symbols = [row[0] for row in cursor.fetchall()]
 
@@ -237,8 +244,18 @@ def update_price_history():
                 continue
 
             latest_price = hist["Close"].iloc[-1]
+            if investment_type == "Mutual Fund" and symbol.isdigit():
+                latest_price = get_mutual_fund_nav(symbol)
+            else:
+                stock = yf.Ticker(symbol)
+                hist = stock.history(period="1d")
+                if hist.empty:
+                    print(f"⚠️ No price data for {symbol}, skipping...")
+                    continue
+                latest_price = hist["Close"].iloc[-1]
+
             cursor.execute("""
-                INSERT INTO price_history (symbol, date, price) VALUES (?, ?, ?)
+                REPLACE INTO price_history (symbol, date, price) VALUES (?, ?, ?)
             """, (symbol, today, latest_price))
 
             print(f"✅ Recorded {symbol} price: {latest_price} on {today}")
