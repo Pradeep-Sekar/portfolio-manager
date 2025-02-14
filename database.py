@@ -243,39 +243,46 @@ def update_price_history():
 
     for symbol, investment_type in records:
         try:
+            # Get the price based on investment type
             if investment_type == "Mutual Fund" and symbol.isdigit():
                 latest_price = get_mutual_fund_nav(symbol)
                 if latest_price is None:
                     print(f"⚠️ No NAV data for {symbol}, skipping...")
                     continue
-            else:
+            else:  # Stock
                 stock = yf.Ticker(symbol)
                 hist = stock.history(period="1d")
                 if hist.empty:
                     print(f"⚠️ No price data for {symbol}, skipping...")
                     continue
                 latest_price = hist["Close"].iloc[-1]
+                
+                # Convert USD to INR only for Indian stocks
+                if not (symbol.endswith(".NS") or symbol.endswith(".BO")):
+                    # Keep USD price as is for US stocks
+                    pass
 
-            # Get the last recorded price
-            cursor.execute("""
-                SELECT price FROM price_history 
-                WHERE symbol = ? 
-                ORDER BY date DESC LIMIT 1
-            """, (symbol,))
-            last_price = cursor.fetchone()
+            if latest_price:
+                # Get the last recorded price
+                cursor.execute("""
+                    SELECT price FROM price_history 
+                    WHERE symbol = ? 
+                    ORDER BY date DESC LIMIT 1
+                """, (symbol,))
+                last_price = cursor.fetchone()
 
-            # Determine price change indicator
-            if last_price:
-                last_price = last_price[0]
-                indicator = "🔼" if latest_price > last_price else "🔽" if latest_price < last_price else "⚫"
-            else:
-                indicator = "🆕"  # New entry
+                # Determine price change indicator
+                if last_price:
+                    last_price = last_price[0]
+                    indicator = "🔼" if latest_price > last_price else "🔽" if latest_price < last_price else "⚫"
+                else:
+                    indicator = "🆕"  # New entry
 
-            cursor.execute("""
-                REPLACE INTO price_history (symbol, date, price) VALUES (?, ?, ?)
-            """, (symbol, today, latest_price))
+                cursor.execute("""
+                    REPLACE INTO price_history (symbol, date, price) VALUES (?, ?, ?)
+                """, (symbol, today, latest_price))
 
-            print(f"✅ Recorded {symbol} price: {round(latest_price, 2)} {indicator} on {today}")
+                print(f"✅ Recorded {symbol} price: {round(latest_price, 2)} {indicator} on {today}")
         except Exception as e:
             print(f"⚠️ Error fetching price for {symbol}: {e}")
 
