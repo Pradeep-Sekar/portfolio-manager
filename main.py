@@ -151,27 +151,33 @@ def main():
                         console.print(f"[bold red]⚠️ Purchase price for {symbol} is not available.[/]")
                         continue
 
+                    # Calculate values in the original currency first
                     total_cost = purchase_price * units
                     current_value = (live_price * units) if live_price else 0
                     profit_loss = (current_value - total_cost) if live_price else 0
 
+                    # Convert to INR if needed
                     if currency == "USD":
                         conversion_rate = get_usd_to_inr()
                         current_value_inr = current_value * conversion_rate if current_value else 0
                         total_cost_inr = total_cost * conversion_rate
+                        profit_loss_inr = profit_loss * conversion_rate
+                        # Format profit/loss in USD
+                        profit_loss_str = f"[bold red]${profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]${profit_loss:.2f}[/]"
                     else:
                         current_value_inr = current_value
                         total_cost_inr = total_cost
-
-                    profit_loss_str = f"[bold red]{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]{profit_loss:.2f}[/]"
+                        profit_loss_inr = profit_loss
+                        # Format profit/loss in INR
+                        profit_loss_str = f"[bold red]₹{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]₹{profit_loss:.2f}[/]"
 
                     if investment_type == "Stock":
                         total_stock_value += current_value_inr
                         total_invested_stock += total_cost_inr
                         stock_table.add_row(
                             str(stock_id), symbol, display_name, purchase_date,
-                            f"{purchase_price:.2f}", str(units), currency,
-                            f"{live_price:.2f} {indicator}" if live_price else "N/A",
+                            f"{currency} {purchase_price:.2f}", str(units), currency,
+                            f"{currency} {live_price:.2f} {indicator}" if live_price else "N/A",
                             profit_loss_str
                         )
                     else:
@@ -189,16 +195,16 @@ def main():
                     console.print(stock_table)
                     difference_stock = total_stock_value - total_invested_stock
                     difference_stock_str = f"[bold red]{difference_stock:.2f}[/]" if difference_stock < 0 else f"[bold green]{difference_stock:.2f}[/]"
-                    console.print(f"💰 [bold cyan]Total Invested in Stocks (INR): {total_invested_stock:.2f}[/]")
-                    console.print(f"💰 [bold cyan]Difference in Stocks (INR): {difference_stock_str}[/]\n")
+                    console.print(f"💰 [bold cyan]Total Invested in Stocks: ₹{total_invested_stock:.2f}[/]")
+                    console.print(f"💰 [bold cyan]Difference in Stocks: ₹{difference_stock_str}[/]\n")
 
                 # Print Mutual Fund Table
                 if len(fund_table.rows) > 0:
                     console.print(fund_table)
                     difference_fund = total_fund_value - total_invested_fund
                     difference_fund_str = f"[bold red]{difference_fund:.2f}[/]" if difference_fund < 0 else f"[bold green]{difference_fund:.2f}[/]"
-                    console.print(f"💰 [bold magenta]Total Invested in Mutual Funds (INR): {total_invested_fund:.2f}[/]")
-                    console.print(f"💰 [bold magenta]Difference in Mutual Funds (INR): {difference_fund_str}[/]\n")
+                    console.print(f"💰 [bold magenta]Total Invested in Mutual Funds: ₹{total_invested_fund:.2f}[/]")
+                    console.print(f"💰 [bold magenta]Difference in Mutual Funds: ₹{difference_fund_str}[/]\n")
 
                 # Print Total Portfolio Summary
                 total_portfolio_value = total_stock_value + total_fund_value
@@ -206,9 +212,9 @@ def main():
                 total_portfolio_difference = total_portfolio_value - total_portfolio_invested
                 total_portfolio_difference_str = f"[bold red]{total_portfolio_difference:.2f}[/]" if total_portfolio_difference < 0 else f"[bold green]{total_portfolio_difference:.2f}[/]"
 
-                console.print(f"💰 [bold cyan]Total Portfolio Invested Amount (INR): {total_portfolio_invested:.2f}[/]")
-                console.print(f"💰 [bold cyan]Total Portfolio Value (INR): {total_portfolio_value:.2f}[/]")
-                console.print(f"💰 [bold cyan]Total Portfolio Difference (INR): {total_portfolio_difference_str}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Invested Amount: ₹{total_portfolio_invested:.2f}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Value: ₹{total_portfolio_value:.2f}[/]")
+                console.print(f"💰 [bold cyan]Total Portfolio Difference: ₹{total_portfolio_difference_str}[/]")
 
         elif choice == "3":
             try:
