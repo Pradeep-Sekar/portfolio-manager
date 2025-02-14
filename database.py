@@ -34,6 +34,12 @@ def add_investment(investment_type, symbol, purchase_date, purchase_price, units
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
+    # Determine currency based on investment type and symbol
+    if investment_type == "Mutual Fund":
+        currency = "INR"  # All mutual funds are in INR
+    else:  # For stocks
+        currency = "INR" if (symbol.endswith(".NS") or symbol.endswith(".BO")) else "USD"
+
     name = None
     if investment_type == "Stock":
         name = get_stock_name(symbol)
