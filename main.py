@@ -1,3 +1,4 @@
+import sqlite3
 from database import (
     initialize_db, add_investment, view_portfolio, delete_investment,
     get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price, 
@@ -129,6 +130,7 @@ def main():
                         live_price = get_mutual_fund_nav(symbol)
 
                     # Get the previous price from history
+                    conn = sqlite3.connect("portfolio.db")
                     cursor = conn.cursor()
                     cursor.execute("""
                         SELECT price FROM price_history 
@@ -136,6 +138,7 @@ def main():
                         ORDER BY date DESC LIMIT 2
                     """, (symbol,))
                     prices = cursor.fetchall()
+                    conn.close()
                     
                     # Determine price change indicator
                     if len(prices) >= 2:
