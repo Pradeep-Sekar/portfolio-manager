@@ -258,7 +258,7 @@ def main():
             
         elif choice == "7":
             from database import get_industry_allocation
-            allocations = get_industry_allocation()
+            allocations, warnings = get_industry_allocation()
             
             if allocations:
                 console.print("\n[bold cyan]📊 Industry Allocation[/]")
@@ -266,13 +266,21 @@ def main():
                 table.add_column("Industry", style="bold white")
                 table.add_column("Value (₹)", justify="right", style="green")
                 table.add_column("Allocation %", justify="right", style="cyan")
+                table.add_column("Risk Level", style="bold red")
                 
-                for industry, value, percentage in allocations:
+                for industry, value, percentage, risk_level in allocations:
                     table.add_row(
                         industry,
                         f"₹{value:,.2f}",
-                        f"{percentage:.2f}%"
+                        f"{percentage:.2f}%",
+                        risk_level
                     )
+                
+                # Display any risk warnings
+                if warnings:
+                    console.print("\n[bold red]Risk Warnings:[/]")
+                    for warning in warnings:
+                        console.print(warning)
                 
                 console.print(table)
             else:

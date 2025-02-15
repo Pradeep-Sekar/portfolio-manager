@@ -179,13 +179,20 @@ def get_industry_allocation():
             industry_values[industry] = industry_values.get(industry, 0) + value
             total_portfolio_value += value
     
-    # Calculate percentages
+    # Calculate percentages and check for over-exposure
     allocations = []
+    warnings = []
     for industry, value in industry_values.items():
         percentage = (value / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
-        allocations.append((industry, value, percentage))
+        risk_level = ""
+        if percentage > 50:
+            risk_level = "⚠️ HIGH RISK"
+            warnings.append(f"⚠️ Warning: {industry} represents {percentage:.1f}% of your portfolio. Consider diversifying to reduce risk.")
+        elif percentage > 30:
+            risk_level = "⚡ MODERATE"
+        allocations.append((industry, value, percentage, risk_level))
     
-    return sorted(allocations, key=lambda x: x[2], reverse=True)  # Sort by percentage
+    return sorted(allocations, key=lambda x: x[2], reverse=True), warnings  # Sort by percentage
 
 def get_historical_price(stock_symbol, period="1mo"):
     """Fetches historical stock price data for the given period."""
