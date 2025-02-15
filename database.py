@@ -141,8 +141,8 @@ def get_usd_to_inr():
         console.print(f"[bold red]⚠️ Error fetching USD to INR conversion rate: {e}[/]")
         return 83.0  # Default fallback rate
 
-def get_industry_allocation():
-    """Calculates the percentage allocation per industry in the portfolio."""
+def get_portfolio_insights():
+    """Calculates portfolio insights including industry and geographic allocation."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
     
@@ -192,7 +192,29 @@ def get_industry_allocation():
             risk_level = "⚡ MODERATE"
         allocations.append((industry, value, percentage, risk_level))
     
-    return sorted(allocations, key=lambda x: x[2], reverse=True), warnings  # Sort by percentage
+    # Calculate geographic exposure
+    geographic_values = {"INR": 0, "USD": 0}
+    for symbol, industry, units, currency, price in stocks:
+        if price:
+            value = units * price
+            if currency == "USD":
+                value_inr = value * get_usd_to_inr()
+                geographic_values["USD"] += value_inr
+            else:
+                geographic_values["INR"] += value
+
+    total_geo_value = geographic_values["INR"] + geographic_values["USD"]
+    geographic_allocation = []
+    for currency, value in geographic_values.items():
+        if total_geo_value > 0:
+            percentage = (value / total_geo_value) * 100
+            geographic_allocation.append((currency, value, percentage))
+
+    return (
+        sorted(allocations, key=lambda x: x[2], reverse=True),  # Industry allocations
+        warnings,  # Risk warnings
+        sorted(geographic_allocation, key=lambda x: x[2], reverse=True)  # Geographic allocation
+    )
 
 def get_historical_price(stock_symbol, period="1mo"):
     """Fetches historical stock price data for the given period."""

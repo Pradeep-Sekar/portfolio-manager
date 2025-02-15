@@ -41,7 +41,7 @@ def main():
         console.print("4. [bold]Exit[/]")
         console.print("5. [bold]View Historical Stock Performance[/]")
         console.print("6. [bold]Update Prices (Manual Refresh)[/]")
-        console.print("7. [bold]View Industry Allocation[/]")
+        console.print("7. [bold]Portfolio Insights[/]")
 
         choice = input("Enter your choice (1-7): ").strip()
 
@@ -257,11 +257,30 @@ def main():
             print("✅ Prices updated successfully!")
             
         elif choice == "7":
-            from database import get_industry_allocation
-            allocations, warnings = get_industry_allocation()
+            from database import get_portfolio_insights
+            allocations, warnings, geographic_allocation = get_portfolio_insights()
             
             if allocations:
-                console.print("\n[bold cyan]📊 Industry Allocation[/]")
+                # Display Geographic Exposure
+                console.print("\n[bold cyan]🌍 Geographic Exposure[/]")
+                geo_table = Table(title="Geographic Allocation", title_style="bold cyan")
+                geo_table.add_column("Region", style="bold white")
+                geo_table.add_column("Value (₹)", justify="right", style="green")
+                geo_table.add_column("Allocation %", justify="right", style="cyan")
+                
+                for currency, value, percentage in geographic_allocation:
+                    region = "Indian Market (INR)" if currency == "INR" else "US Market (USD)"
+                    geo_table.add_row(
+                        region,
+                        f"₹{value:,.2f}",
+                        f"{percentage:.2f}%"
+                    )
+                
+                console.print(geo_table)
+                console.print()
+
+                # Display Industry Allocation
+                console.print("[bold cyan]📊 Industry Allocation[/]")
                 table = Table(title="Industry Allocation", title_style="bold cyan")
                 table.add_column("Industry", style="bold white")
                 table.add_column("Value (₹)", justify="right", style="green")
