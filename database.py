@@ -121,7 +121,7 @@ def get_live_price(stock_symbol, currency):
             else:
                 currency = "USD"
 
-            if currency == "INR":
+            if currency == "USD":
                 conversion_rate = get_usd_to_inr()
                 return round(live_price * conversion_rate, 2)
 
