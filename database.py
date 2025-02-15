@@ -256,11 +256,7 @@ def update_price_history():
                     print(f"⚠️ No price data for {symbol}, skipping...")
                     continue
                 latest_price = hist["Close"].iloc[-1]
-                
-                # Convert USD to INR only for Indian stocks
-                if not (symbol.endswith(".NS") or symbol.endswith(".BO")):
-                    # Keep USD price as is for US stocks
-                    pass
+                # No currency conversion here - just return the raw price
 
             if latest_price:
                 # Get the last recorded price

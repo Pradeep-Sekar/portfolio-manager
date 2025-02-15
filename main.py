@@ -156,19 +156,16 @@ def main():
                     current_value = (live_price * units) if live_price else 0
                     profit_loss = (current_value - total_cost) if live_price else 0
 
-                    # Convert to INR if needed
+                    # Convert to INR for totals
+                    conversion_rate = get_usd_to_inr() if currency == "USD" else 1
+                    current_value_inr = current_value * conversion_rate
+                    total_cost_inr = total_cost * conversion_rate
+                    profit_loss_inr = profit_loss * conversion_rate
+
+                    # Format profit/loss string in original currency
                     if currency == "USD":
-                        conversion_rate = get_usd_to_inr()
-                        current_value_inr = current_value * conversion_rate if current_value else 0
-                        total_cost_inr = total_cost * conversion_rate
-                        profit_loss_inr = profit_loss * conversion_rate
-                        # Format profit/loss in USD
                         profit_loss_str = f"[bold red]${profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]${profit_loss:.2f}[/]"
                     else:
-                        current_value_inr = current_value
-                        total_cost_inr = total_cost
-                        profit_loss_inr = profit_loss
-                        # Format profit/loss in INR
                         profit_loss_str = f"[bold red]₹{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]₹{profit_loss:.2f}[/]"
 
                     if investment_type == "Stock":
