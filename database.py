@@ -257,10 +257,15 @@ def update_price_history():
                 """, (symbol,))
                 last_price = cursor.fetchone()
 
-                # Determine price change indicator
+                # Determine price change indicator with color
                 if last_price:
                     last_price = last_price[0]
-                    indicator = "🔼" if latest_price > last_price else "🔽" if latest_price < last_price else "⚫"
+                    if latest_price > last_price:
+                        indicator = "\033[92m🔼\033[0m"  # Green up arrow
+                    elif latest_price < last_price:
+                        indicator = "\033[91m🔽\033[0m"  # Red down arrow
+                    else:
+                        indicator = "⚫"  # Neutral dot
                 else:
                     indicator = "🆕"  # New entry
 
