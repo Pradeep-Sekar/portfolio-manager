@@ -115,16 +115,6 @@ def get_live_price(stock_symbol, currency):
             progress.update(task, completed=100)
             live_price = round(stock_info["Close"].iloc[-1], 2)
             
-            # Convert USD → INR if needed
-            if stock_symbol.endswith(".NS") or stock_symbol.endswith(".BO"):
-                currency = "INR"
-            else:
-                currency = "USD"
-
-            if currency == "USD":
-                conversion_rate = get_usd_to_inr()
-                return round(live_price * conversion_rate, 2)
-
             return live_price
     except Exception as e:
         console.print(f"[bold red]⚠️ Error fetching live price for {stock_symbol}: {e}[/]")

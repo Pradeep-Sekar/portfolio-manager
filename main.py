@@ -164,17 +164,17 @@ def main():
 
                     # Format profit/loss string in original currency
                     if currency == "USD":
-                        profit_loss_str = f"[bold red]${profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]${profit_loss:.2f}[/]"
+                        profit_loss_str = f"[bold red]{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]{profit_loss:.2f}[/]"
                     else:
-                        profit_loss_str = f"[bold red]₹{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]₹{profit_loss:.2f}[/]"
+                        profit_loss_str = f"[bold red]{profit_loss:.2f}[/]" if profit_loss < 0 else f"[bold green]{profit_loss:.2f}[/]"
 
                     if investment_type == "Stock":
                         total_stock_value += current_value_inr
                         total_invested_stock += total_cost_inr
                         stock_table.add_row(
                             str(stock_id), symbol, display_name, purchase_date,
-                            f"{currency} {purchase_price:.2f}", str(units), currency,
-                            f"{currency} {live_price:.2f} {indicator}" if live_price else "N/A",
+                            f"{purchase_price:.2f}", str(units), currency,
+                            f"{live_price:.2f} {indicator}" if live_price else "N/A",
                             profit_loss_str
                         )
                     else:
