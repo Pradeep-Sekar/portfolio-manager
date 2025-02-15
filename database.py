@@ -185,11 +185,16 @@ def get_portfolio_insights():
     for industry, value in industry_values.items():
         percentage = (value / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
         risk_level = ""
-        if percentage > 50:
+        if percentage > 60:
             risk_level = "⚠️ HIGH RISK"
             warnings.append(f"⚠️ Warning: {industry} represents {percentage:.1f}% of your portfolio. Consider diversifying to reduce risk.")
-        elif percentage > 30:
-            risk_level = "⚡ MODERATE"
+        elif percentage > 40:
+            risk_level = "⚠️ MODERATE RISK"
+            warnings.append(f"⚡ Note: {industry} represents {percentage:.1f}% of your portfolio. Consider rebalancing.")
+        elif percentage > 20:
+            risk_level = "🟡 LOW RISK"
+        else:
+            risk_level = "✅ DIVERSIFIED"
         allocations.append((industry, value, percentage, risk_level))
     
     # Calculate geographic exposure
