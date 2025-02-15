@@ -141,6 +141,52 @@ def get_usd_to_inr():
         console.print(f"[bold red]⚠️ Error fetching USD to INR conversion rate: {e}[/]")
         return 83.0  # Default fallback rate
 
+def get_industry_allocation():
+    """Calculates the percentage allocation per industry in the portfolio."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+    
+    # Get all stocks with their current values
+    cursor.execute("""
+        SELECT p.symbol, p.industry, p.units, p.currency, ph.price 
+        FROM portfolio p
+        LEFT JOIN (
+            SELECT symbol, price 
+            FROM price_history 
+            WHERE (symbol, date) IN (
+                SELECT symbol, MAX(date) 
+                FROM price_history 
+                GROUP BY symbol
+            )
+        ) ph ON p.symbol = ph.symbol
+        WHERE p.investment_type = 'Stock'
+    """)
+    
+    stocks = cursor.fetchall()
+    conn.close()
+    
+    # Calculate total portfolio value and industry allocations
+    industry_values = {}
+    total_portfolio_value = 0
+    
+    for symbol, industry, units, currency, price in stocks:
+        if price:  # Skip if no price available
+            value = units * price
+            if currency == "USD":
+                value *= get_usd_to_inr()  # Convert to INR
+                
+            industry = industry if industry != "N/A" else "Other"
+            industry_values[industry] = industry_values.get(industry, 0) + value
+            total_portfolio_value += value
+    
+    # Calculate percentages
+    allocations = []
+    for industry, value in industry_values.items():
+        percentage = (value / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+        allocations.append((industry, value, percentage))
+    
+    return sorted(allocations, key=lambda x: x[2], reverse=True)  # Sort by percentage
+
 def get_historical_price(stock_symbol, period="1mo"):
     """Fetches historical stock price data for the given period."""
     try:

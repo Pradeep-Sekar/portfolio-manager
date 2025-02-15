@@ -41,11 +41,12 @@ def main():
         console.print("4. [bold]Exit[/]")
         console.print("5. [bold]View Historical Stock Performance[/]")
         console.print("6. [bold]Update Prices (Manual Refresh)[/]")
+        console.print("7. [bold]View Industry Allocation[/]")
 
-        choice = input("Enter your choice (1-6): ").strip()
+        choice = input("Enter your choice (1-7): ").strip()
 
-        if choice not in ["1", "2", "3", "4", "5", "6"]:
-            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 5.[/]")
+        if choice not in ["1", "2", "3", "4", "5", "6", "7"]:
+            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 7.[/]")
             continue
 
         if choice == "1":
@@ -254,6 +255,28 @@ def main():
             from database import update_price_history
             update_price_history()
             print("✅ Prices updated successfully!")
+            
+        elif choice == "7":
+            from database import get_industry_allocation
+            allocations = get_industry_allocation()
+            
+            if allocations:
+                console.print("\n[bold cyan]📊 Industry Allocation[/]")
+                table = Table(title="Industry Allocation", title_style="bold cyan")
+                table.add_column("Industry", style="bold white")
+                table.add_column("Value (₹)", justify="right", style="green")
+                table.add_column("Allocation %", justify="right", style="cyan")
+                
+                for industry, value, percentage in allocations:
+                    table.add_row(
+                        industry,
+                        f"₹{value:,.2f}",
+                        f"{percentage:.2f}%"
+                    )
+                
+                console.print(table)
+            else:
+                console.print("[bold red]No stock investments found in portfolio.[/]")
 
 if __name__ == "__main__":
     main()
