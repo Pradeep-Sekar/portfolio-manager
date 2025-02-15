@@ -26,6 +26,67 @@ def initialize_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS portfolio_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            total_value REAL NOT NULL,
+            total_cost REAL NOT NULL,
+            profit_loss REAL NOT NULL,
+            inr_exposure REAL NOT NULL,
+            usd_exposure REAL NOT NULL,
+            UNIQUE(date) ON CONFLICT REPLACE
+        )
+    """)
+
+    # Calculate and store portfolio snapshot
+    today = datetime.datetime.today().strftime("%Y-%m-%d")
+    
+    # Calculate total portfolio value and exposures
+    cursor.execute("""
+        SELECT p.symbol, p.investment_type, p.purchase_price, p.units, p.currency, ph.price
+        FROM portfolio p
+        LEFT JOIN (
+            SELECT symbol, price 
+            FROM price_history 
+            WHERE date = ?
+        ) ph ON p.symbol = ph.symbol
+    """, (today,))
+    
+    investments = cursor.fetchall()
+    
+    total_value = 0
+    total_cost = 0
+    inr_exposure = 0
+    usd_exposure = 0
+    usd_rate = get_usd_to_inr()
+    
+    for symbol, inv_type, buy_price, units, currency, current_price in investments:
+        if current_price is None:
+            continue
+            
+        cost = buy_price * units
+        value = current_price * units
+        
+        if currency == "USD":
+            cost *= usd_rate
+            value *= usd_rate
+            usd_exposure += value
+        else:
+            inr_exposure += value
+            
+        total_cost += cost
+        total_value += value
+    
+    profit_loss = total_value - total_cost
+    
+    # Store the snapshot
+    cursor.execute("""
+        INSERT INTO portfolio_history 
+        (date, total_value, total_cost, profit_loss, inr_exposure, usd_exposure)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (today, total_value, total_cost, profit_loss, inr_exposure, usd_exposure))
+    
     conn.commit()
     conn.close()
 
@@ -305,7 +366,7 @@ def update_price_history():
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
-    # Fetch all investment symbols
+    # Ensure tables exist
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS price_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -313,6 +374,19 @@ def update_price_history():
             date TEXT NOT NULL,
             price REAL NOT NULL,
             UNIQUE(symbol, date) ON CONFLICT REPLACE
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS portfolio_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            total_value REAL NOT NULL,
+            total_cost REAL NOT NULL,
+            profit_loss REAL NOT NULL,
+            inr_exposure REAL NOT NULL,
+            usd_exposure REAL NOT NULL,
+            UNIQUE(date) ON CONFLICT REPLACE
         )
     """)
     cursor.execute("SELECT symbol, investment_type FROM portfolio")
@@ -368,3 +442,24 @@ def update_price_history():
 
     conn.commit()
     conn.close()
+def view_historical_performance():
+    """Retrieves historical portfolio performance data."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT 
+            date,
+            total_value,
+            total_cost,
+            profit_loss,
+            inr_exposure,
+            usd_exposure
+        FROM portfolio_history
+        ORDER BY date DESC
+        LIMIT 30  # Last 30 days
+    """)
+    
+    history = cursor.fetchall()
+    conn.close()
+    return history

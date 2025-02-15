@@ -42,11 +42,12 @@ def main():
         console.print("5. [bold]View Historical Stock Performance[/]")
         console.print("6. [bold]Update Prices (Manual Refresh)[/]")
         console.print("7. [bold]Portfolio Insights[/]")
+        console.print("8. [bold]View Historical Performance[/]")
 
-        choice = input("Enter your choice (1-7): ").strip()
+        choice = input("Enter your choice (1-8): ").strip()
 
-        if choice not in ["1", "2", "3", "4", "5", "6", "7"]:
-            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 7.[/]")
+        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
+            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 8.[/]")
             continue
 
         if choice == "1":
@@ -304,6 +305,35 @@ def main():
                 console.print(table)
             else:
                 console.print("[bold red]No stock investments found in portfolio.[/]")
+                
+        elif choice == "8":
+            from database import view_historical_performance
+            history = view_historical_performance()
+            
+            if history:
+                console.print("\n[bold cyan]📈 Portfolio Performance History[/]")
+                table = Table(title="Last 30 Days", title_style="bold cyan")
+                table.add_column("Date", style="bold white")
+                table.add_column("Total Value", justify="right", style="green")
+                table.add_column("Total Cost", justify="right", style="yellow")
+                table.add_column("Profit/Loss", justify="right", style="bold red")
+                table.add_column("INR Exposure", justify="right", style="cyan")
+                table.add_column("USD Exposure", justify="right", style="magenta")
+                
+                for date, value, cost, pl, inr_exp, usd_exp in history:
+                    pl_style = "[bold red]" if pl < 0 else "[bold green]"
+                    table.add_row(
+                        date,
+                        f"₹{value:,.2f}",
+                        f"₹{cost:,.2f}",
+                        f"{pl_style}₹{pl:,.2f}[/]",
+                        f"₹{inr_exp:,.2f}",
+                        f"₹{usd_exp:,.2f}"
+                    )
+                
+                console.print(table)
+            else:
+                console.print("[bold red]No historical data available yet.[/]")
 
 if __name__ == "__main__":
     main()
