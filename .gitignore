@@ -14,3 +14,5 @@ portfolio-manager/
 # Ignore logs
 logs/
 *.log
+
+.env
