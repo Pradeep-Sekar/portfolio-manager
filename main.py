@@ -101,6 +101,8 @@ def main():
                     table.add_column("ID", justify="center", style="bold yellow")
                     table.add_column("Symbol", style="bold white")
                     table.add_column("Name", style="bold white")
+                    table.add_column("Sector", style="bold blue")
+                    table.add_column("Industry", style="bold blue")
                     table.add_column("Purchase Date", justify="center", style="bold white")
                     table.add_column("Buy Price", justify="right", style="green")
                     table.add_column("Units", justify="center", style="cyan")
@@ -172,7 +174,7 @@ def main():
                         total_stock_value += current_value_inr
                         total_invested_stock += total_cost_inr
                         stock_table.add_row(
-                            str(stock_id), symbol, display_name, purchase_date,
+                            str(stock_id), symbol, display_name, sector, industry, purchase_date,
                             f"{purchase_price:.2f}", str(units), currency,
                             f"{live_price:.2f} {indicator}" if live_price else "N/A",
                             profit_loss_str
@@ -181,7 +183,7 @@ def main():
                         total_fund_value += current_value_inr
                         total_invested_fund += total_cost_inr
                         fund_table.add_row(
-                            str(stock_id), symbol, display_name, purchase_date,
+                            str(stock_id), symbol, display_name, "N/A", "N/A", purchase_date,
                             f"{purchase_price:.2f}", str(units), currency,
                             f"{live_price:.2f}" if live_price else "N/A",
                             profit_loss_str
