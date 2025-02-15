@@ -34,6 +34,8 @@ def add_investment(investment_type, symbol, purchase_date, purchase_price, units
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
+    name, sector, industry = "UNKNOWN", "N/A", "N/A"  # Default values
+
     # Determine currency based on investment type and symbol
     if investment_type == "Mutual Fund":
         currency = "INR"  # All mutual funds are in INR
@@ -50,9 +52,9 @@ def add_investment(investment_type, symbol, purchase_date, purchase_price, units
         name = "Unknown"
 
     cursor.execute("""
-        INSERT INTO portfolio (investment_type, symbol, name, purchase_date, purchase_price, units, currency)
-        VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (investment_type, symbol, name, purchase_date, purchase_price, units, currency))
+        INSERT INTO portfolio (investment_type, symbol, name, sector, industry, purchase_date, purchase_price, units, currency)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (investment_type, symbol, name, sector, industry, purchase_date, purchase_price, units, currency))
     conn.commit()
     conn.close()
     print(f"✅ {investment_type} {symbol} ({currency}) added successfully! Name: {name}")
@@ -60,7 +62,7 @@ def add_investment(investment_type, symbol, purchase_date, purchase_price, units
 def view_portfolio():
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, investment_type, symbol, name, purchase_date, purchase_price, units, currency FROM portfolio")
+    cursor.execute("SELECT id, investment_type, symbol, name, sector, industry, purchase_date, purchase_price, units, currency FROM portfolio")
     records = cursor.fetchall()
     conn.close()
     return records
