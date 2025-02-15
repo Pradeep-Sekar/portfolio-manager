@@ -30,23 +30,30 @@ def initialize_db():
     conn.close()
 
 def add_investment(investment_type, symbol, purchase_date, purchase_price, units, currency):
-    """Adds a stock or mutual fund entry into the database with a proper name."""
+    """Adds a stock or mutual fund entry into the database with a proper name, sector, and industry."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
-    name, sector, industry = "UNKNOWN", "N/A", "N/A"  # Default values
+    name, sector, industry = "Unknown", "N/A", "N/A"  # Default values
 
     # Determine currency based on investment type and symbol
     if investment_type == "Mutual Fund":
         currency = "INR"  # All mutual funds are in INR
+        name = get_mutual_fund_name(symbol)
     else:  # For stocks
         currency = "INR" if (symbol.endswith(".NS") or symbol.endswith(".BO")) else "USD"
-
-    name = None
-    if investment_type == "Stock":
         name = get_stock_name(symbol)
-    elif investment_type == "Mutual Fund":
-        name = get_mutual_fund_name(symbol)
+        
+        # Fetch additional stock info using yfinance
+        try:
+            stock = yf.Ticker(symbol)
+            info = stock.info
+            sector = info.get('sector', 'N/A')
+            industry = info.get('industry', 'N/A')
+            if not name:  # If name wasn't fetched earlier
+                name = info.get('longName', 'Unknown')
+        except Exception as e:
+            print(f"⚠️ Could not fetch additional info for {symbol}: {e}")
 
     if not name:
         name = "Unknown"
