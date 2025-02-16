@@ -111,6 +111,7 @@ def main():
                     table.add_column("Currency", justify="center", style="magenta")
                     table.add_column("Current Price/NAV", justify="right", style="bold green")
                     table.add_column("Profit/Loss", justify="right", style="bold red")
+                    table.add_column("P/L %", justify="right", style="bold cyan")
 
                 total_stock_value = 0
                 total_fund_value = 0
@@ -179,7 +180,8 @@ def main():
                             str(stock_id), symbol, display_name, sector, industry, purchase_date,
                             f"{purchase_price:.2f}", str(units), currency,
                             f"{live_price:.2f} {indicator}" if live_price else "N/A",
-                            profit_loss_str
+                            profit_loss_str,
+                            f"[{'bold green' if profit_loss >= 0 else 'bold red'}]{((current_value - total_cost) / total_cost * 100):.2f}%[/]" if live_price else "N/A"
                         )
                     else:
                         total_fund_value += current_value_inr
@@ -188,7 +190,8 @@ def main():
                             str(stock_id), symbol, display_name, "N/A", "N/A", purchase_date,
                             f"{purchase_price:.2f}", str(units), currency,
                             f"{live_price:.2f}" if live_price else "N/A",
-                            profit_loss_str
+                            profit_loss_str,
+                            f"[{'bold green' if profit_loss >= 0 else 'bold red'}]{((current_value - total_cost) / total_cost * 100):.2f}%[/]" if live_price else "N/A"
                         )
 
                 # Print Stock Table
