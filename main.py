@@ -44,10 +44,10 @@ def main():
         console.print("7. [bold]Portfolio Insights[/]")
         console.print("8. [bold]View Historical Performance[/]")
 
-        choice = input("Enter your choice (1-8): ").strip()
+        choice = input("Enter your choice (1-9): ").strip()
 
-        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
-            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 8.[/]")
+        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 9.[/]")
             continue
 
         if choice == "1":
@@ -311,6 +311,229 @@ def main():
                 
         elif choice == "8":
             from database import view_historical_performance
+            history = view_historical_performance()
+            
+            if history:
+                console.print("\n[bold cyan]📈 Portfolio Performance History[/]")
+                table = Table(title="Last 30 Days", title_style="bold cyan")
+                table.add_column("Date", style="bold white")
+                table.add_column("Total Value", justify="right", style="green")
+                table.add_column("Total Cost", justify="right", style="yellow")
+                table.add_column("Profit/Loss", justify="right", style="bold red")
+                table.add_column("INR Exposure", justify="right", style="cyan")
+                table.add_column("USD Exposure", justify="right", style="magenta")
+                
+                for date, value, cost, pl, inr_exp, usd_exp in history:
+                    pl_style = "[bold red]" if pl < 0 else "[bold green]"
+                    table.add_row(
+                        date,
+                        f"₹{value:,.2f}",
+                        f"₹{cost:,.2f}",
+                        f"{pl_style}₹{pl:,.2f}[/]",
+                        f"₹{inr_exp:,.2f}",
+                        f"₹{usd_exp:,.2f}"
+                    )
+                
+                console.print(table)
+            else:
+                console.print("[bold red]No historical data available yet.[/]")
+                
+        elif choice == "9":
+            manage_goals()
+
+def manage_goals():
+    """Displays the Goal Management menu."""
+    while True:
+        console.print("\n[bold cyan]🎯 Goal Management[/]", style="bold underline")
+        console.print("1. [bold]Add a Goal[/]")
+        console.print("2. [bold]Associate an Investment with a Goal[/]")
+        console.print("3. [bold]View Goals/Progress[/]")
+        console.print("4. [bold]Edit Priority / Dormant[/]")
+        console.print("5. [bold]Delete Goal(s)[/]")
+        console.print("6. [bold]Return to Main Menu[/]")
+
+        choice = input("Enter your choice (1-6): ").strip()
+
+        if choice == "1":
+            add_goal()
+        elif choice == "2":
+            associate_investment_with_goal()
+        elif choice == "3":
+            view_goals_progress()
+        elif choice == "4":
+            edit_goal_priority()
+        elif choice == "5":
+            delete_goal()
+        elif choice == "6":
+            break
+        else:
+            console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 6.[/]")
+
+def add_goal():
+    """Adds a new financial goal to the database."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    name = input("Enter Goal Name: ").strip()
+    try:
+        target_amount = float(input("Enter Target Amount (₹): ").strip())
+        time_horizon = int(input("Enter Time Horizon (years): ").strip())
+        expected_cagr_input = input("Enter Expected CAGR (% per annum, default is 12%): ").strip()
+        expected_cagr = float(expected_cagr_input) if expected_cagr_input else 12.0
+    except ValueError:
+        console.print("[bold red]❌ Invalid input! Please enter numeric values where required.[/]")
+        conn.close()
+        return
+
+    priority_level_input = input("Enter Priority Level (High/Standard/Low/Dormant, default is Standard): ").strip().title()
+    priority_level = priority_level_input if priority_level_input else 'Standard'
+    if priority_level not in ['High', 'Standard', 'Low', 'Dormant']:
+        console.print("[bold red]❌ Invalid priority level![/]")
+        conn.close()
+        return
+
+    goal_creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    cursor.execute("""
+        INSERT INTO goals (name, target_amount, time_horizon, priority_level, expected_cagr, goal_creation_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (name, target_amount, time_horizon, priority_level, expected_cagr, goal_creation_date))
+
+    conn.commit()
+    conn.close()
+    console.print(f"✅ Goal '{name}' added successfully!")
+
+def associate_investment_with_goal():
+    """Associates an investment with a goal."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    # Fetch all goals
+    cursor.execute("SELECT id, name FROM goals")
+    goals = cursor.fetchall()
+    if not goals:
+        console.print("[bold yellow]⚠️ No goals found. Please add a goal first.[/]")
+        conn.close()
+        return
+
+    console.print("\n[bold cyan]Existing Goals:[/]")
+    for goal in goals:
+        console.print(f"[{goal[0]}] {goal[1]}")
+
+    try:
+        goal_id = int(input("Enter the ID of the goal to associate investment with: ").strip())
+    except ValueError:
+        console.print("[bold red]❌ Invalid input! Please enter a valid numeric ID.[/]")
+        conn.close()
+        return
+
+    investment_type = input("Enter Investment Type (SIP/Lumpsum): ").strip().title()
+    if investment_type not in ['SIP', 'Lumpsum']:
+        console.print("[bold red]❌ Invalid investment type![/]")
+        conn.close()
+        return
+
+    try:
+        amount = float(input("Enter Investment Amount (₹): ").strip())
+    except ValueError:
+        console.print("[bold red]❌ Invalid amount! Please enter a numeric value.[/]")
+        conn.close()
+        return
+
+    record_goal_investment(goal_id, amount, investment_type)
+    console.print(f"✅ Investment of ₹{amount:.2f} recorded for goal ID {goal_id}.")
+
+def view_goals_progress():
+    """Displays the progress for all goals."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM goals")
+    goal_ids = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
+    if not goal_ids:
+        console.print("[bold yellow]⚠️ No goals found. Please add a goal first.[/]")
+        return
+
+    for goal_id in goal_ids:
+        view_goal_progress(goal_id)
+
+def edit_goal_priority():
+    """Allows the user to edit the priority level of a goal."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    # Fetch all goals
+    cursor.execute("SELECT id, name, priority_level FROM goals")
+    goals = cursor.fetchall()
+
+    if not goals:
+        console.print("[bold yellow]⚠️ No goals found. Please add a goal first.[/]")
+        conn.close()
+        return
+
+    # Display existing goals with priorities
+    console.print("\n[bold cyan]Existing Goals:[/]")
+    for goal in goals:
+        console.print(f"[{goal[0]}] {goal[1]} - Current Priority: {goal[2]}")
+
+    try:
+        goal_id = int(input("Enter the ID of the goal to edit: ").strip())
+    except ValueError:
+        console.print("[bold red]❌ Invalid input! Please enter a valid numeric ID.[/]")
+        conn.close()
+        return
+
+    new_priority = input("Enter New Priority Level (High/Standard/Low/Dormant): ").strip().title()
+    if new_priority not in ['High', 'Standard', 'Low', 'Dormant']:
+        console.print("[bold red]❌ Invalid priority level![/]")
+        conn.close()
+        return
+
+    cursor.execute("UPDATE goals SET priority_level = ? WHERE id = ?", (new_priority, goal_id))
+    conn.commit()
+    conn.close()
+    console.print(f"✅ Goal priority updated to '{new_priority}' successfully!")
+
+def delete_goal():
+    """Deletes a goal from the database."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    # Fetch all goals
+    cursor.execute("SELECT id, name FROM goals")
+    goals = cursor.fetchall()
+
+    if not goals:
+        console.print("[bold yellow]⚠️ No goals found.[/]")
+        conn.close()
+        return
+
+    # Display existing goals
+    console.print("\n[bold cyan]Existing Goals:[/]")
+    for goal in goals:
+        console.print(f"[{goal[0]}] {goal[1]}")
+
+    try:
+        goal_id = int(input("Enter the ID of the goal to delete: ").strip())
+    except ValueError:
+        console.print("[bold red]❌ Invalid input! Please enter a valid numeric ID.[/]")
+        conn.close()
+        return
+
+    # Confirm deletion
+    confirm = input(f"Are you sure you want to delete goal ID {goal_id}? (y/n): ").strip().lower()
+    if confirm != 'y':
+        console.print("✋ Deletion cancelled.")
+        conn.close()
+        return
+
+    cursor.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+    cursor.execute("DELETE FROM goal_investments WHERE goal_id = ?", (goal_id,))
+    conn.commit()
+    conn.close()
+    console.print("✅ Goal deleted successfully!")
             history = view_historical_performance()
             
             if history:

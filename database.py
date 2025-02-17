@@ -9,7 +9,7 @@ from fetch_data import get_stock_name, get_mutual_fund_name  # ✅ Import from n
 import sqlite3
 
 def initialize_db():
-    """Creates the database and portfolio table with correct schema."""
+    """Creates the database and tables with correct schema."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
@@ -23,6 +23,31 @@ def initialize_db():
             purchase_price REAL NOT NULL,
             units REAL NOT NULL,
             currency TEXT NOT NULL
+        )
+    """)
+
+    # Create the goals table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS goals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            target_amount REAL NOT NULL,
+            time_horizon INTEGER NOT NULL,
+            priority_level TEXT NOT NULL CHECK(priority_level IN ('High', 'Standard', 'Low', 'Dormant')) DEFAULT 'Standard',
+            expected_cagr REAL NOT NULL DEFAULT 12.0,
+            goal_creation_date TEXT NOT NULL
+        )
+    """)
+
+    # Create the goal_investments table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS goal_investments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            goal_id INTEGER NOT NULL,
+            investment_type TEXT NOT NULL CHECK(investment_type IN ('SIP', 'Lumpsum')),
+            investment_date TEXT NOT NULL,
+            amount REAL NOT NULL,
+            FOREIGN KEY(goal_id) REFERENCES goals(id)
         )
     """)
 
@@ -281,6 +306,131 @@ def get_portfolio_insights():
         warnings,  # Risk warnings
         sorted(geographic_allocation, key=lambda x: x[2], reverse=True)  # Geographic allocation
     )
+
+def record_goal_investment(goal_id, amount, investment_type):
+    """Records an investment (SIP or Lumpsum) for a specific goal."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    investment_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    cursor.execute("""
+        INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount)
+        VALUES (?, ?, ?, ?)
+    """, (goal_id, investment_type, investment_date, amount))
+
+    conn.commit()
+    conn.close()
+
+def get_initial_investment(goal_id):
+    """Retrieves the initial investment amount for the goal."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT amount FROM goal_investments 
+        WHERE goal_id = ? ORDER BY investment_date ASC LIMIT 1
+    """, (goal_id,))
+    result = cursor.fetchone()
+    conn.close()
+
+    return result[0] if result else 0
+
+def calculate_required_investment(target_amount, expected_cagr, years_remaining, current_progress):
+    """Calculates the additional monthly investment required to meet the goal."""
+    future_value_needed = target_amount - current_progress * ((1 + expected_cagr / 100) ** years_remaining)
+    monthly_rate = expected_cagr / 100 / 12
+    months_remaining = years_remaining * 12
+    if monthly_rate == 0:
+        return future_value_needed / months_remaining
+    else:
+        annuity_factor = ((1 + monthly_rate) ** months_remaining - 1) / monthly_rate
+        required_monthly_investment = future_value_needed / annuity_factor
+        return required_monthly_investment
+
+def view_goal_progress(goal_id):
+    """Computes and displays progress towards a specific goal."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    # Fetch goal details
+    cursor.execute("SELECT name, target_amount, time_horizon, expected_cagr, goal_creation_date FROM goals WHERE id = ?", (goal_id,))
+    goal = cursor.fetchone()
+
+    if not goal:
+        console.print("[bold red]❌ Goal not found.[/]")
+        conn.close()
+        return
+
+    name, target_amount, time_horizon, expected_cagr, goal_creation_date = goal
+
+    # Calculate years passed
+    start_date = datetime.datetime.strptime(goal_creation_date, "%Y-%m-%d")
+    today = datetime.datetime.now()
+    years_passed = (today - start_date).days / 365.25
+
+    # Fetch total investments for the goal
+    cursor.execute("SELECT SUM(amount) FROM goal_investments WHERE goal_id = ?", (goal_id,))
+    result = cursor.fetchone()
+    current_progress = result[0] or 0
+
+    # Calculate CAGR achieved
+    if years_passed > 0 and current_progress > 0:
+        initial_investment = get_initial_investment(goal_id)
+        cagr_achieved = ((current_progress / initial_investment) ** (1 / years_passed) - 1) * 100
+    else:
+        cagr_achieved = 0
+
+    # Calculate projected future value
+    years_remaining = time_horizon - years_passed
+    projected_future_value = current_progress * ((1 + expected_cagr / 100) ** years_remaining)
+
+    conn.close()
+
+    # Display progress and suggestions
+    console.print(f"\n[bold cyan]Goal: {name}[/]")
+    console.print(f"Target Amount: ₹{target_amount:,.2f}")
+    console.print(f"Current Progress: ₹{current_progress:,.2f}")
+    console.print(f"Years Passed: {years_passed:.2f}")
+    console.print(f"CAGR Achieved: {cagr_achieved:.2f}%")
+    console.print(f"Projected Future Value: ₹{projected_future_value:,.2f}")
+
+    if projected_future_value >= target_amount:
+        console.print("[bold green]🎉 You are on track to achieve your goal![/]")
+    else:
+        shortfall = target_amount - projected_future_value
+        suggested_sip = calculate_required_investment(target_amount, expected_cagr, years_remaining, current_progress)
+        console.print(f"[bold red]⚠️ You are falling behind your goal.[/]")
+        console.print(f"Shortfall: ₹{shortfall:,.2f}")
+        console.print(f"💡 Suggested Additional SIP: ₹{suggested_sip:,.2f} per month.")
+
+def insert_sample_goals():
+    """Inserts sample goals and investments for testing."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    # Sample goals
+    cursor.executemany("""
+        INSERT INTO goals (name, target_amount, time_horizon, priority_level, expected_cagr, goal_creation_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, [
+        ('Retirement', 10000000, 20, 'High', 12.0, datetime.datetime.now().strftime("%Y-%m-%d")),
+        ('Car Purchase', 500000, 3, 'Standard', 10.0, datetime.datetime.now().strftime("%Y-%m-%d")),
+    ])
+
+    # Sample investments
+    cursor.executemany("""
+        INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount)
+        VALUES (?, ?, ?, ?)
+    """, [
+        (1, 'SIP', '2023-01-01', 10000),
+        (1, 'SIP', '2023-02-01', 10000),
+        (2, 'Lumpsum', '2023-03-15', 200000),
+    ])
+
+    conn.commit()
+    conn.close()
+    console.print("✅ Sample goals and investments inserted successfully!")
 
 def get_historical_price(stock_symbol, period="1mo"):
     """Fetches historical stock price data for the given period."""
