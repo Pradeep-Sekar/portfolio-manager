@@ -8,28 +8,6 @@ from fetch_data import get_stock_name, get_mutual_fund_name  # ✅ Import from n
 
 import sqlite3
 
-def migrate_goal_investments_table():
-    """Adds missing columns to goal_investments table if they don't exist."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-    
-    # Check if columns exist
-    cursor.execute("PRAGMA table_info(goal_investments)")
-    columns = [column[1] for column in cursor.fetchall()]
-    
-    # Add missing columns if they don't exist
-    if 'recurring' not in columns:
-        cursor.execute("ALTER TABLE goal_investments ADD COLUMN recurring INTEGER NOT NULL DEFAULT 0")
-    if 'start_date' not in columns:
-        cursor.execute("ALTER TABLE goal_investments ADD COLUMN start_date TEXT")
-    if 'end_date' not in columns:
-        cursor.execute("ALTER TABLE goal_investments ADD COLUMN end_date TEXT")
-    
-    conn.commit()
-    conn.close()
-    
-    # Then migrate existing tables if needed
-    migrate_goal_investments_table()
 
 def initialize_db():
     """Creates the database and tables with correct schema."""
@@ -51,33 +29,6 @@ def initialize_db():
         )
     """)
 
-    # Create the goals table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS goals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            target_amount REAL NOT NULL,
-            time_horizon INTEGER NOT NULL,
-            priority_level TEXT NOT NULL CHECK(priority_level IN ('High', 'Standard', 'Low', 'Dormant')) DEFAULT 'Standard',
-            expected_cagr REAL NOT NULL DEFAULT 12.0,
-            goal_creation_date TEXT NOT NULL
-        )
-    """)
-
-    # Create the goal_investments table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS goal_investments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            goal_id INTEGER NOT NULL,
-            investment_type TEXT NOT NULL CHECK(investment_type IN ('SIP', 'Lumpsum')),
-            investment_date TEXT NOT NULL,
-            amount REAL NOT NULL,
-            recurring INTEGER NOT NULL DEFAULT 0,
-            start_date TEXT,
-            end_date TEXT,
-            FOREIGN KEY(goal_id) REFERENCES goals(id)
-        )
-    """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS portfolio_history (
