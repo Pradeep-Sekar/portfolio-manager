@@ -457,7 +457,7 @@ def view_historical_performance():
             usd_exposure
         FROM portfolio_history
         ORDER BY date DESC
-        LIMIT 30  # Last 30 days
+        LIMIT 30   
     """)
     
     history = cursor.fetchall()
