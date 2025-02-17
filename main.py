@@ -44,6 +44,7 @@ def main():
         console.print("6. [bold]Update Prices (Manual Refresh)[/]")
         console.print("7. [bold]Portfolio Insights[/]")
         console.print("8. [bold]View Historical Performance[/]")
+        console.print("9. [bold]Manage Goals[/]")
 
         choice = input("Enter your choice (1-9): ").strip()
 
