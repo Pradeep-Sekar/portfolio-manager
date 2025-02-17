@@ -442,9 +442,6 @@ def associate_investment_with_goal():
         conn.close()
         return
     investment_type = investment_type.title()
-        console.print("[bold red]❌ Invalid investment type![/]")
-        conn.close()
-        return
 
     # Prompt for recurring if SIP
     recurring = 0
