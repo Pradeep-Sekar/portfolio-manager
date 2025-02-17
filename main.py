@@ -50,7 +50,7 @@ def main():
 
         choice = input("Enter your choice (1-10): ").strip()
 
-        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
             console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 9.[/]")
             continue
 
@@ -435,8 +435,8 @@ def associate_investment_with_goal():
         return
 
     # Prompt for investment type
-    investment_type = input("Enter Investment Type (SIP/Lumpsum): ").strip().title()
-    if investment_type not in ['SIP', 'Lumpsum']:
+    investment_type = input("Enter Investment Type (SIP/Lumpsum): ").strip().upper()
+    if investment_type not in ['SIP', 'LUMPSUM']:
         console.print("[bold red]❌ Invalid investment type![/]")
         conn.close()
         return
