@@ -46,8 +46,9 @@ def main():
         console.print("7. [bold]Portfolio Insights[/]")
         console.print("8. [bold]View Historical Performance[/]")
         console.print("9. [bold]Manage Goals[/]")
+        console.print("10. [bold]Apply Monthly SIPs[/]")
 
-        choice = input("Enter your choice (1-9): ").strip()
+        choice = input("Enter your choice (1-10): ").strip()
 
         if choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
             console.print("[bold red]❌ Invalid choice! Please enter a number between 1 and 9.[/]")
@@ -343,6 +344,9 @@ def main():
                 
         elif choice == "9":
             manage_goals()
+        elif choice == "10":
+            from database import apply_sips_for_the_month
+            apply_sips_for_the_month()
 
 def manage_goals():
     """Displays the Goal Management menu."""
@@ -430,11 +434,25 @@ def associate_investment_with_goal():
         conn.close()
         return
 
+    # Prompt for investment type
     investment_type = input("Enter Investment Type (SIP/Lumpsum): ").strip().title()
     if investment_type not in ['SIP', 'Lumpsum']:
         console.print("[bold red]❌ Invalid investment type![/]")
         conn.close()
         return
+
+    # Prompt for recurring if SIP
+    recurring = 0
+    start_date = None
+    end_date = None
+    if investment_type == 'SIP':
+        is_recurring = input("Is this a recurring SIP? (y/n): ").strip().lower()
+        if is_recurring == 'y':
+            recurring = 1
+            start_date = input("Enter SIP Start Date (YYYY-MM-DD) (default is today): ").strip()
+            if not start_date:
+                start_date = datetime.now().strftime("%Y-%m-%d")
+            end_date = input("Enter SIP End Date (YYYY-MM-DD) (Press Enter if no end date): ").strip()
 
     try:
         amount = float(input("Enter Investment Amount (₹): ").strip())
@@ -443,8 +461,17 @@ def associate_investment_with_goal():
         conn.close()
         return
 
-    record_goal_investment(goal_id, amount, investment_type)
+    # Insert the investment record
+    cursor.execute("""
+        INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount, recurring, start_date, end_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (goal_id, investment_type, datetime.now().strftime("%Y-%m-%d"), amount, recurring, start_date, end_date))
+    conn.commit()
+    conn.close()
+    
     console.print(f"✅ Investment of ₹{amount:.2f} recorded for goal ID {goal_id}.")
+    if recurring == 1:
+        console.print("🔄 This is a recurring SIP that will be applied each month.")
 
 def view_goals_progress():
     """Displays the progress for all goals."""

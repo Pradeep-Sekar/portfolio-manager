@@ -47,6 +47,9 @@ def initialize_db():
             investment_type TEXT NOT NULL CHECK(investment_type IN ('SIP', 'Lumpsum')),
             investment_date TEXT NOT NULL,
             amount REAL NOT NULL,
+            recurring INTEGER NOT NULL DEFAULT 0,
+            start_date TEXT,
+            end_date TEXT,
             FOREIGN KEY(goal_id) REFERENCES goals(id)
         )
     """)
@@ -592,6 +595,42 @@ def update_price_history():
 
     conn.commit()
     conn.close()
+def apply_sips_for_the_month():
+    """Applies all active recurring SIPs for the current month by inserting entries into goal_investments."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    # Fetch all active recurring SIPs
+    cursor.execute("""
+        SELECT id, goal_id, amount FROM goal_investments
+        WHERE investment_type = 'SIP' AND recurring = 1
+    """)
+    sips = cursor.fetchall()
+
+    if not sips:
+        console.print("[bold yellow]⚠️ No active recurring SIPs found.[/]")
+        conn.close()
+        return
+
+    for sip_id, goal_id, amount in sips:
+        # Check if the goal is not dormant
+        cursor.execute("SELECT priority_level FROM goals WHERE id = ?", (goal_id,))
+        priority_level = cursor.fetchone()
+        if priority_level and priority_level[0] == 'Dormant':
+            continue  # Skip dormant goals
+
+        # Insert a new investment record for this month's SIP
+        cursor.execute("""
+            INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount, recurring)
+            VALUES (?, 'SIP', ?, ?, 0)
+        """, (goal_id, today, amount))
+        console.print(f"✅ Applied SIP of ₹{amount:.2f} for goal ID {goal_id}.")
+
+    conn.commit()
+    conn.close()
+
 def view_historical_performance():
     """Retrieves historical portfolio performance data."""
     conn = sqlite3.connect("portfolio.db")
