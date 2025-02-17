@@ -2,8 +2,7 @@ import sqlite3
 from datetime import datetime
 from database import (
     initialize_db, add_investment, view_portfolio, delete_investment,
-    get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price,
-    record_goal_investment, view_goal_progress
+    get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price
 )
 from fetch_data import (get_stock_name, get_mutual_fund_name)
 from config import OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY
