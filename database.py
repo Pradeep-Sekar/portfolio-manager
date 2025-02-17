@@ -8,10 +8,35 @@ from fetch_data import get_stock_name, get_mutual_fund_name  # ✅ Import from n
 
 import sqlite3
 
+def migrate_goal_investments_table():
+    """Adds missing columns to goal_investments table if they don't exist."""
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+    
+    # Check if columns exist
+    cursor.execute("PRAGMA table_info(goal_investments)")
+    columns = [column[1] for column in cursor.fetchall()]
+    
+    # Add missing columns if they don't exist
+    if 'recurring' not in columns:
+        cursor.execute("ALTER TABLE goal_investments ADD COLUMN recurring INTEGER NOT NULL DEFAULT 0")
+    if 'start_date' not in columns:
+        cursor.execute("ALTER TABLE goal_investments ADD COLUMN start_date TEXT")
+    if 'end_date' not in columns:
+        cursor.execute("ALTER TABLE goal_investments ADD COLUMN end_date TEXT")
+    
+    conn.commit()
+    conn.close()
+    
+    # Then migrate existing tables if needed
+    migrate_goal_investments_table()
+
 def initialize_db():
     """Creates the database and tables with correct schema."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
+    
+    # First create tables if they don't exist
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS portfolio (
