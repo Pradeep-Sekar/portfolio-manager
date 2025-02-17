@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+from datetime import datetime
 from database import (
     initialize_db, add_investment, view_portfolio, delete_investment,
     get_live_price, get_mutual_fund_nav, get_usd_to_inr, get_historical_price,
@@ -395,7 +395,7 @@ def add_goal():
         conn.close()
         return
 
-    goal_creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    goal_creation_date = datetime.now().strftime("%Y-%m-%d")
 
     cursor.execute("""
         INSERT INTO goals (name, target_amount, time_horizon, priority_level, expected_cagr, goal_creation_date)
