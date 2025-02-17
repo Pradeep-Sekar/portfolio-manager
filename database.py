@@ -621,37 +621,41 @@ def update_price_history():
     conn.commit()
     conn.close()
 def apply_sips_for_the_month():
-    """Applies all active recurring SIPs for the current month by inserting entries into goal_investments."""
+    """Applies all recurring SIPs for the current month while preventing duplicates."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
 
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    today = datetime.datetime.now()
+    first_day_of_month = today.replace(day=1).strftime("%Y-%m-%d")
 
-    # Fetch all active recurring SIPs
+    # Find all active SIPs
     cursor.execute("""
-        SELECT id, goal_id, amount FROM goal_investments
-        WHERE investment_type = 'SIP' AND recurring = 1
+        SELECT goal_id, amount FROM goal_investments
+        WHERE recurring = 1
     """)
-    sips = cursor.fetchall()
+    active_sips = cursor.fetchall()
 
-    if not sips:
-        console.print("[bold yellow]⚠️ No active recurring SIPs found.[/]")
-        conn.close()
-        return
+    for goal_id, amount in active_sips:
+        # Check if an SIP for this goal already exists this month
+        cursor.execute("""
+            SELECT 1 FROM goal_investments 
+            WHERE goal_id = ? AND investment_type = 'SIP' 
+            AND investment_date >= ?
+        """, (goal_id, first_day_of_month))
+        
+        existing_sip = cursor.fetchone()
 
-    for sip_id, goal_id, amount in sips:
-        # Check if the goal is not dormant
-        cursor.execute("SELECT priority_level FROM goals WHERE id = ?", (goal_id,))
-        priority_level = cursor.fetchone()
-        if priority_level and priority_level[0] == 'Dormant':
-            continue  # Skip dormant goals
+        if existing_sip:
+            print(f"⚠️ SIP for goal ID {goal_id} already applied this month. Skipping...")
+            continue  # Skip if an SIP already exists
 
-        # Insert a new investment record for this month's SIP
+        # Insert SIP for this month
         cursor.execute("""
             INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount, recurring)
-            VALUES (?, 'SIP', ?, ?, 0)
-        """, (goal_id, today, amount))
-        console.print(f"✅ Applied SIP of ₹{amount:.2f} for goal ID {goal_id}.")
+            VALUES (?, 'SIP', ?, ?, 1)
+        """, (goal_id, today.strftime("%Y-%m-%d"), amount))
+
+        print(f"✅ Applied SIP of ₹{amount:.2f} for goal ID {goal_id}.")
 
     conn.commit()
     conn.close()
