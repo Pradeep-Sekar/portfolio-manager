@@ -435,8 +435,13 @@ def associate_investment_with_goal():
         return
 
     # Prompt for investment type
-    investment_type = input("Enter Investment Type (SIP/Lumpsum): ").strip().title()
-    if investment_type not in ['SIP', 'Lumpsum']:
+    investment_type = input("Enter Investment Type (SIP/Lumpsum): ").strip()
+    # Convert to title case after validation to ensure consistent database storage
+    if investment_type.upper() not in ['SIP', 'LUMPSUM']:
+        console.print("[bold red]❌ Invalid investment type![/]")
+        conn.close()
+        return
+    investment_type = investment_type.title()
         console.print("[bold red]❌ Invalid investment type![/]")
         conn.close()
         return
