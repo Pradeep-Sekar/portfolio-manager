@@ -286,102 +286,9 @@ def get_portfolio_insights():
         sorted(geographic_allocation, key=lambda x: x[2], reverse=True)  # Geographic allocation
     )
 
-def record_goal_investment(goal_id, amount, investment_type):
-    """Records an investment (SIP or Lumpsum) for a specific goal."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
 
-    investment_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    cursor.execute("""
-        INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount)
-        VALUES (?, ?, ?, ?)
-    """, (goal_id, investment_type, investment_date, amount))
 
-    conn.commit()
-    conn.close()
-
-def get_initial_investment(goal_id):
-    """Retrieves the initial investment amount for the goal."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT amount FROM goal_investments 
-        WHERE goal_id = ? ORDER BY investment_date ASC LIMIT 1
-    """, (goal_id,))
-    result = cursor.fetchone()
-    conn.close()
-
-    return result[0] if result else 0
-
-def calculate_required_investment(target_amount, expected_cagr, years_remaining, current_progress):
-    """Calculates the additional monthly investment required to meet the goal."""
-    future_value_needed = target_amount - current_progress * ((1 + expected_cagr / 100) ** years_remaining)
-    monthly_rate = expected_cagr / 100 / 12
-    months_remaining = years_remaining * 12
-    if monthly_rate == 0:
-        return future_value_needed / months_remaining
-    else:
-        annuity_factor = ((1 + monthly_rate) ** months_remaining - 1) / monthly_rate
-        required_monthly_investment = future_value_needed / annuity_factor
-        return required_monthly_investment
-
-def view_goal_progress(goal_id):
-    """Computes and displays progress towards a specific goal."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-
-    # Fetch goal details
-    cursor.execute("SELECT name, target_amount, time_horizon, expected_cagr, goal_creation_date FROM goals WHERE id = ?", (goal_id,))
-    goal = cursor.fetchone()
-
-    if not goal:
-        console.print("[bold red]❌ Goal not found.[/]")
-        conn.close()
-        return
-
-    name, target_amount, time_horizon, expected_cagr, goal_creation_date = goal
-
-    # Calculate years passed
-    start_date = datetime.datetime.strptime(goal_creation_date, "%Y-%m-%d")
-    today = datetime.datetime.now()
-    years_passed = (today - start_date).days / 365.25
-
-    # Fetch total investments for the goal
-    cursor.execute("SELECT SUM(amount) FROM goal_investments WHERE goal_id = ?", (goal_id,))
-    result = cursor.fetchone()
-    current_progress = result[0] or 0
-
-    # Calculate CAGR achieved
-    if years_passed > 0 and current_progress > 0:
-        initial_investment = get_initial_investment(goal_id)
-        cagr_achieved = ((current_progress / initial_investment) ** (1 / years_passed) - 1) * 100
-    else:
-        cagr_achieved = 0
-
-    # Calculate projected future value
-    years_remaining = time_horizon - years_passed
-    projected_future_value = current_progress * ((1 + expected_cagr / 100) ** years_remaining)
-
-    conn.close()
-
-    # Display progress and suggestions
-    console.print(f"\n[bold cyan]Goal: {name}[/]")
-    console.print(f"Target Amount: ₹{target_amount:,.2f}")
-    console.print(f"Current Progress: ₹{current_progress:,.2f}")
-    console.print(f"Years Passed: {years_passed:.2f}")
-    console.print(f"CAGR Achieved: {cagr_achieved:.2f}%")
-    console.print(f"Projected Future Value: ₹{projected_future_value:,.2f}")
-
-    if projected_future_value >= target_amount:
-        console.print("[bold green]🎉 You are on track to achieve your goal![/]")
-    else:
-        shortfall = target_amount - projected_future_value
-        suggested_sip = calculate_required_investment(target_amount, expected_cagr, years_remaining, current_progress)
-        console.print(f"[bold red]⚠️ You are falling behind your goal.[/]")
-        console.print(f"Shortfall: ₹{shortfall:,.2f}")
-        console.print(f"💡 Suggested Additional SIP: ₹{suggested_sip:,.2f} per month.")
 
 def insert_sample_goals():
     """Inserts sample goals and investments for testing."""
@@ -568,45 +475,6 @@ def update_price_history():
                 print(f"✅ Recorded {symbol} price: {round(latest_price, 2)} {indicator} on {today}")
         except Exception as e:
             print(f"⚠️ Error fetching price for {symbol}: {e}")
-
-    conn.commit()
-    conn.close()
-def apply_sips_for_the_month():
-    """Applies all recurring SIPs for the current month while preventing duplicates."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-
-    today = datetime.datetime.now()
-    first_day_of_month = today.replace(day=1).strftime("%Y-%m-%d")
-
-    # Find all active SIPs
-    cursor.execute("""
-        SELECT goal_id, amount FROM goal_investments
-        WHERE recurring = 1
-    """)
-    active_sips = cursor.fetchall()
-
-    for goal_id, amount in active_sips:
-        # Check if an SIP for this goal already exists this month
-        cursor.execute("""
-            SELECT 1 FROM goal_investments 
-            WHERE goal_id = ? AND investment_type = 'SIP' 
-            AND investment_date >= ?
-        """, (goal_id, first_day_of_month))
-        
-        existing_sip = cursor.fetchone()
-
-        if existing_sip:
-            print(f"⚠️ SIP for goal ID {goal_id} already applied this month. Skipping...")
-            continue  # Skip if an SIP already exists
-
-        # Insert SIP for this month
-        cursor.execute("""
-            INSERT INTO goal_investments (goal_id, investment_type, investment_date, amount, recurring)
-            VALUES (?, 'SIP', ?, ?, 1)
-        """, (goal_id, today.strftime("%Y-%m-%d"), amount))
-
-        print(f"✅ Applied SIP of ₹{amount:.2f} for goal ID {goal_id}.")
 
     conn.commit()
     conn.close()
